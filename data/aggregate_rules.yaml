@@ -14,3 +14,7 @@ HPV核酸检测:
   method: blood_type_combo
   summary_field: 血型结果
   detail_field: 血型详情
+ROMA指数:
+  method: roma_select
+  summary_field: ROMA评估结果
+  detail_field: ROMA详情

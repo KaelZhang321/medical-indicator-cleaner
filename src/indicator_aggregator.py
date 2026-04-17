@@ -58,4 +58,25 @@ class IndicatorAggregator:
                         "aggregate_detail": f"ABO({abo}), RH({rh})",
                     }
                 )
+            elif rule["method"] == "roma_select":
+                # ROMA has pre/post-menopausal variants; pick the applicable one
+                pre = group.loc[group["standard_name"].astype(str).str.contains("绝经前"), "numeric_value"]
+                post = group.loc[group["standard_name"].astype(str).str.contains("绝经后"), "numeric_value"]
+                pre_val = float(pre.iloc[0]) if not pre.empty and pd.notna(pre.iloc[0]) else None
+                post_val = float(post.iloc[0]) if not post.empty and pd.notna(post.iloc[0]) else None
+                if pre_val is not None and post_val is not None:
+                    summary = f"绝经前ROMA={pre_val}, 绝经后ROMA={post_val}"
+                elif pre_val is not None:
+                    summary = f"绝经前ROMA={pre_val}"
+                elif post_val is not None:
+                    summary = f"绝经后ROMA={post_val}"
+                else:
+                    summary = "无ROMA数据"
+                rows.append(
+                    {
+                        "major_item_standard_name": major_item_name,
+                        "aggregate_summary": summary,
+                        "aggregate_detail": f"pre={pre_val}, post={post_val}",
+                    }
+                )
         return pd.DataFrame(rows)
