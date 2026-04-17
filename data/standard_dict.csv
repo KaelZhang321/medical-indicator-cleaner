@@ -1,0 +1,159 @@
+code,standard_name,abbreviation,aliases,category,common_unit,result_type
+HY-XCG-001,白细胞计数,WBC,白细胞;白细胞数;白血球;WBC计数,血常规,10^9/L,numeric
+HY-XCG-002,红细胞计数,RBC,红细胞;红细胞数;RBC计数;红血球,血常规,10^12/L,numeric
+HY-XCG-003,血红蛋白,HGB,Hb;血色素;血色蛋白;血红蛋白测定,血常规,g/L,numeric
+HY-XCG-004,红细胞压积,HCT,红细胞比容;血细胞比容;HCT测定;压积,血常规,%,numeric
+HY-XCG-005,血小板计数,PLT,血小板;血小板数;PLT计数;血小板测定,血常规,10^9/L,numeric
+HY-XCG-006,平均红细胞体积,MCV,红细胞平均体积;平均RBC体积;MCV测定;平均红细胞容积,血常规,fL,numeric
+HY-XCG-007,平均红细胞血红蛋白量,MCH,平均血红蛋白量;平均红细胞Hb量;MCH测定;平均红细胞血红蛋白,血常规,pg,numeric
+HY-XCG-008,平均红细胞血红蛋白浓度,MCHC,平均血红蛋白浓度;平均红细胞Hb浓度;MCHC测定;平均红细胞血红蛋白浓度,血常规,g/L,numeric
+HY-XCG-009,血小板分布宽度,PDW,血小板宽度;血小板体积分布宽度;PDW测定;血小板分布,血常规,fL,numeric
+HY-XCG-010,平均血小板体积,MPV,血小板平均体积;平均PLT体积;MPV测定;平均血小板容积,血常规,fL,numeric
+HY-XCG-011,红细胞分布宽度,RDW,红细胞宽度;红细胞体积分布宽度;RDW测定;红细胞分布,血常规,%,numeric
+HY-XCG-012,血小板压积,PCT,血小板比积;血小板容积比;PCT测定;血小板压积测定,血常规,%,numeric
+HY-XCG-013,中性粒细胞百分比,NEUT%,中性粒细胞比率;中性粒百分比;NEU%;NEUT百分比,血常规,%,numeric
+HY-XCG-014,淋巴细胞百分比,LYMPH%,淋巴细胞比率;淋巴百分比;LYM%;LYMPH百分比,血常规,%,numeric
+HY-XCG-015,单核细胞百分比,MONO%,单核细胞比率;单核百分比;MONO;MONO百分比,血常规,%,numeric
+HY-BZ-001,总胆固醇,TC,胆固醇;CHOL;CHO;总胆固醇测定,血脂,mmol/L,numeric
+HY-BZ-002,甘油三酯,TG,三酰甘油;甘油三脂;TRIG;TG测定,血脂,mmol/L,numeric
+HY-BZ-003,高密度脂蛋白胆固醇,HDL-C,高密度脂蛋白;HDL;高密度胆固醇;HDL胆固醇,血脂,mmol/L,numeric
+HY-BZ-004,低密度脂蛋白胆固醇,LDL-C,低密度脂蛋白;LDL;低密度胆固醇;LDL胆固醇,血脂,mmol/L,numeric
+HY-BZ-005,载脂蛋白A1,APO-A,ApoA1;载脂蛋白A-I;Apo-A;载脂A1,血脂,g/L,numeric
+HY-BZ-006,载脂蛋白B,APO-B,ApoB;载脂蛋白B100;Apo-B;载脂B,血脂,g/L,numeric
+HY-BZ-007,脂蛋白(a),LP(a),Lp(a);脂蛋白A;脂蛋白a测定;LPA,血脂,mg/L,numeric
+HY-GG-001,丙氨酸氨基转移酶,ALT,谷丙转氨酶;GPT;ALT测定;丙氨酸转氨酶,肝功能,U/L,numeric
+HY-GG-002,天门冬氨酸氨基转移酶,AST,谷草转氨酶;GOT;AST测定;天门冬氨酸转氨酶,肝功能,U/L,numeric
+HY-GG-003,γ-谷氨酰转移酶,GGT,谷氨酰转肽酶;谷氨酰基转移酶;GGT测定;谷氨酰转移酶,肝功能,U/L,numeric
+HY-GG-004,碱性磷酸酶,ALP,碱性磷酸酯酶;AKP;ALP测定;碱性磷酸酶测定,肝功能,U/L,numeric
+HY-GG-005,总胆红素,TBIL,胆红素总量;TBil;总胆红素测定;总胆红素定量,肝功能,μmol/L,numeric
+HY-GG-006,直接胆红素,DBIL,结合胆红素;DBil;直接胆红素测定;直接胆红素定量,肝功能,μmol/L,numeric
+HY-GG-007,间接胆红素,IBIL,非结合胆红素;IBil;间接胆红素测定;间接胆红素定量,肝功能,μmol/L,numeric
+HY-GG-008,总蛋白,TP,蛋白总量;T-Pro;总蛋白测定;血清总蛋白,肝功能,g/L,numeric
+HY-GG-009,白蛋白,ALB,白蛋白测定;Alb;血清白蛋白;白蛋白定量,肝功能,g/L,numeric
+HY-GG-010,球蛋白,GLB,球蛋白测定;Globulin;血清球蛋白;球蛋白定量,肝功能,g/L,numeric
+HY-SG-001,尿素氮,BUN,血尿素氮;尿素氮测定;BUN测定;尿素氮定量,肾功能,mmol/L,numeric
+HY-SG-002,肌酐,Cr,血肌酐;CREA;肌酐测定;肌酐定量,肾功能,μmol/L,numeric
+HY-SG-003,尿酸,UA,血尿酸;URIC;尿酸测定;尿酸定量,肾功能,μmol/L,numeric
+HY-SG-004,胱抑素C,Cys-C,Cystatin C;胱抑素C测定;CysC;胱抑素,肾功能,mg/L,numeric
+HY-SG-005,β2-微球蛋白,β2-MG,Beta2微球蛋白;β2MG;B2M;β2微球蛋白测定,肾功能,mg/L,numeric
+HY-XT-001,空腹血糖,FPG,葡萄糖;空腹血葡萄糖;GLU;血糖,血糖,mmol/L,numeric
+HY-XT-002,糖化血红蛋白,HbA1c,糖化血红蛋白A1c;A1C;HbA1C;GHb,血糖,%,numeric
+HY-NCG-001,尿浊度,TUR,尿液浊度;尿浑浊度;TURBIDITY;尿浊度测定,尿常规,,qualitative
+HY-NCG-002,尿酸碱度,PH,尿pH;pH值;尿液酸碱度;尿PH,尿常规,,mixed
+HY-NCG-003,尿亚硝酸盐,NIT,亚硝酸盐;尿NIT;NIT测定;尿亚硝酸盐定性,尿常规,,qualitative
+HY-NCG-004,尿比重,SG,尿液比重;SG测定;尿比重测定;比重SG,尿常规,,mixed
+HY-NCG-005,尿蛋白,PRO,尿液蛋白;尿蛋白定性;PRO测定;尿蛋白测定,尿常规,,qualitative
+HY-NCG-006,尿胆红素,BIL,尿液胆红素;尿BIL;BIL定性;尿胆红素测定,尿常规,,qualitative
+HY-NCG-007,尿胆原,URO,尿胆原定性;URO测定;尿液胆原;尿胆原测定,尿常规,,qualitative
+HY-NCG-008,尿酮体,KET,尿酮;KET测定;尿酮体定性;尿酮体测定,尿常规,,qualitative
+HY-NCG-009,尿颜色,COL,尿液颜色;COL测定;尿颜色测定;颜色COL,尿常规,,qualitative
+HY-NCG-010,白细胞酯酶,LEU,尿白细胞;LEU测定;尿液白细胞酯酶;白细胞酯酶测定,尿常规,,qualitative
+HY-NCG-011,尿潜血,BLD,尿隐血;BLD测定;尿潜血测定;潜血定性,尿常规,,qualitative
+HY-NCG-012,尿葡萄糖,uGLU,尿糖;尿葡萄糖定性;UGLU;尿糖测定,尿常规,,qualitative
+HY-JZ-001,促甲状腺激素,TSH,促甲状腺素;TSH测定;促甲状腺激素测定;甲促素,甲状腺功能,mIU/L,numeric
+HY-JZ-002,游离甲状腺素,FT4,游离T4;FT4测定;游离甲状腺素4;游离四碘甲状腺素,甲状腺功能,pmol/L,numeric
+HY-JZ-003,游离三碘甲状腺原氨酸,FT3,游离T3;FT3测定;游离甲状腺原氨酸;游离三碘甲腺原氨酸,甲状腺功能,pmol/L,numeric
+HY-JZ-004,甲状腺过氧化物酶抗体,TPO-Ab,TPO抗体;甲状腺过氧化物酶Ab;TPOAb;甲状腺过氧化酶抗体,甲状腺功能,IU/mL,numeric
+HY-JZ-005,甲状腺球蛋白抗体,TG-Ab,TG抗体;甲状腺球蛋白Ab;TGAb;甲状腺球蛋白抗体测定,甲状腺功能,IU/mL,numeric
+HY-ZL-001,甲胎蛋白,AFP,甲胎蛋白测定;AFP定量;★甲胎蛋白;甲胎蛋白定量,肿瘤标志物,IU/mL,numeric
+HY-ZL-002,癌胚抗原,CEA,癌胚抗原测定;CEA定量;胚抗原;癌胚抗原定量,肿瘤标志物,ng/mL,numeric
+HY-ZL-003,糖类抗原125,CA12-5,CA125;糖抗原125;癌抗原125;CA125测定,肿瘤标志物,U/mL,numeric
+HY-ZL-004,糖类抗原19-9,CA19-9,CA199;糖抗原19-9;癌抗原19-9;CA19-9测定,肿瘤标志物,U/mL,numeric
+HY-ZL-005,糖类抗原15-3,CA15-3,CA153;糖抗原15-3;癌抗原15-3;CA15-3测定,肿瘤标志物,U/mL,numeric
+HY-ZL-006,糖类抗原72-4,CA72-4,CA724;糖抗原72-4;癌抗原72-4;CA72-4测定,肿瘤标志物,U/mL,numeric
+HY-ZL-007,神经元特异性烯醇化酶,NSE,NSE测定;神经元烯醇化酶;NSE定量;神经元特异性烯醇化酶测定,肿瘤标志物,ng/mL,numeric
+HY-ZL-008,鳞状细胞癌相关抗原,SCC,SCCAg;鳞癌抗原;SCC测定;鳞状细胞癌抗原,肿瘤标志物,ng/mL,numeric
+HY-ZL-009,细胞角蛋白19片段,CYFRA21-1,CYFRA211;细胞角蛋白19;CYFRA测定;细胞角蛋白19片段测定,肿瘤标志物,ng/mL,numeric
+HY-ZL-010,铁蛋白,FER,Ferritin;血清铁蛋白;FER测定;铁蛋白测定,肿瘤标志物,ng/mL,numeric
+HY-ZL-011,人附睾蛋白4,HE4,HE-4;附睾蛋白4;HE4测定;人附睾蛋白4测定,肿瘤标志物,pmol/L,numeric
+HY-ZL-012,胃泌素释放肽前体,ProGRP,Pro-GRP;胃泌素释放肽前体测定;ProGRP测定;胃泌素释放肽前体定量,肿瘤标志物,pg/mL,numeric
+HY-NXJ-001,催乳素,PRL,泌乳素;PRL测定;催乳素测定;催乳素定量,女性激素,ng/mL,numeric
+HY-NXJ-002,睾酮,TESTO,TESTOSTERONE;总睾酮;睾酮测定;睾酮定量,女性激素,ng/mL,numeric
+HY-NXJ-003,孕酮,PROG,黄体酮;PROGESTERONE;孕酮测定;孕酮定量,女性激素,ng/mL,numeric
+HY-NXJ-004,雌二醇,E2,17β-雌二醇;E2测定;雌二醇测定;雌二醇定量,女性激素,pg/mL,numeric
+HY-NXJ-005,黄体生成素,LH,促黄体生成素;LH测定;黄体激素;黄体生成素测定,女性激素,mIU/mL,numeric
+HY-NXJ-006,卵泡刺激素,FSH,促卵泡生成素;FSH测定;卵泡刺激激素;卵泡刺激素测定,女性激素,mIU/mL,numeric
+HY-NXJ-007,脱氢表雄酮硫酸盐,DHEA-S,DHEAS;硫酸脱氢表雄酮;DHEA-S测定;脱氢表雄酮硫酸酯,女性激素,μg/dL,numeric
+HY-NXJ-008,β-人绒毛膜促性腺激素,β-HCG,βHCG;β人绒毛膜促性腺激素;HCG;β-HCG测定,女性激素,mIU/mL,numeric
+HY-NXH-001,活化部分凝血活酶时间,APTT,部分凝血活酶时间;APTT测定;活化部分凝血时间;活化部分凝血活酶时间测定,凝血功能,s,numeric
+HY-NXH-002,凝血酶原时间,PT,PT测定;凝血酶原时间测定;PT time;凝血酶原时间定量,凝血功能,s,numeric
+HY-NXH-003,纤维蛋白原,Fbg,FIB;纤维蛋白原测定;Fbg测定;纤维蛋白原定量,凝血功能,g/L,numeric
+HY-NXH-004,凝血酶时间,TT,TT测定;凝血酶时间测定;Thrombin Time;凝血酶时间定量,凝血功能,s,numeric
+HY-NXH-005,国际标准化比值,PT.INR,INR;PT-INR;国际标准化比值测定;凝血INR,凝血功能,,numeric
+HY-NXH-006,抗凝血酶III,AT-III,AT3;抗凝血酶3;ATIII;抗凝血酶III测定,凝血功能,%,numeric
+HY-NXH-007,凝血酶原活动度,PT%,凝血酶原活动度测定;PT百分比;PT活动度;凝血酶原活性,凝血功能,%,numeric
+HY-NXH-008,D-二聚体,D-Dimer,D二聚体;DIMER;D-Dimer测定;D二聚体测定,凝血功能,mg/L FEU,numeric
+HY-MY-001,人类免疫缺陷病毒抗体,HIV-Ab,HIV抗体;艾滋抗体;HIVAb;人免疫缺陷病毒抗体,免疫检测,,qualitative
+HY-MY-002,梅毒螺旋体抗体,TP-Ab,梅毒密螺旋体抗体;TPAb;梅毒抗体;梅毒螺旋体抗体测定,免疫检测,,qualitative
+HY-MY-003,丙型肝炎病毒抗体,HCV-Ab,丙肝抗体;HCVAb;HCV抗体;丙肝病毒抗体,免疫检测,,qualitative
+HY-MY-004,免疫球蛋白E,IgE,总IgE;IGE;免疫球蛋白E测定;IgE测定,免疫检测,IU/mL,numeric
+HY-MY-005,类风湿因子,RF,类风湿因子测定;RF定量;★类风湿因子;类风湿因子定量,免疫检测,IU/mL,numeric
+HY-MY-006,抗链球菌溶血素O,ASO,抗链O;ASLO;抗链球菌溶血素;抗链球菌溶血素O测定,免疫检测,IU/mL,numeric
+HY-MY-007,抗环瓜氨酸肽抗体,A-CCP,CCP抗体;抗CCP;ACCP;抗环瓜氨酸肽抗体测定,免疫检测,U/mL,numeric
+HY-YY-001,叶酸,FOL,叶酸测定;Folate;FOL测定;叶酸定量,营养元素,ng/mL,numeric
+HY-YY-002,维生素B12,VitB12,维生素B12测定;VB12;Vitamin B12;VitB12测定,营养元素,pg/mL,numeric
+HY-YY-003,25-羟基维生素D,25-OH-VitD,25羟维生素D;25OHVitD;维生素D;25-羟维生素D测定,营养元素,ng/mL,numeric
+HY-QT-001,抗缪勒管激素,AMH,AMH测定;抗穆勒管激素;缪勒管激素;抗缪勒管激素测定,其他,ng/mL,numeric
+HY-QT-002,巨细胞病毒抗体,CMV-Ab,巨细胞病毒IgM抗体;CMVAb;巨细胞病毒抗体测定;CMV抗体,其他,,qualitative
+HY-QT-003,呼气试验13CO2,13CO2,13C呼气试验;13碳呼气;13CO2测定;呼气试验13CO2测定,其他,,numeric
+HY-QT-004,ABO血型,ABO,血型ABO;ABO分型;ABO血型鉴定;ABO血型测定,其他,,qualitative
+HY-QT-005,RH血型,RH,Rh分型;RH因子;Rh血型;RH血型鉴定,其他,,qualitative
+HY-QT-006,细菌性阴道病,BV,细菌性阴道病检测;BV检测;BV测定;细菌性阴道病测定,其他,,qualitative
+HY-QT-007,随机尿微量白蛋白,RUmALB,尿微量白蛋白;随机尿微量白蛋白测定;RUMALB;随机尿白蛋白,其他,mg/L,numeric
+HY-QT-008,随机尿肌酐,RUCr,尿肌酐;随机尿肌酐测定;RUCR;随机尿Cr,其他,mmol/L,numeric
+FK-BD-001,霉菌,霉菌,白带霉菌;霉菌检查;真菌;霉菌检测,白带常规,,qualitative
+FK-BD-002,滴虫,滴虫,白带滴虫;滴虫检查;阴道滴虫;滴虫检测,白带常规,,qualitative
+FK-BD-003,清洁度,清洁度,阴道清洁度;白带清洁度;清洁程度;清洁度检查,白带常规,,qualitative
+ER-TC-001,身体总水分,TBW,总水分;身体水分;TBW测定;体内总水分,人体成分,L,numeric
+ER-TC-002,体脂百分比,PBF,体脂率;体脂肪百分比;PBF测定;体脂百分率,人体成分,%,numeric
+ER-TC-003,身体质量指数,BMI,体重指数;体质指数;BMI测定;体质指数测定,人体成分,kg/平方米,numeric
+ER-TC-004,基础代谢率,BMR,基础代谢;基础代谢能量;BMR测定;基础代谢率测定,人体成分,kcal,numeric
+ER-TC-005,内脏脂肪面积,VFA,内脏脂肪;内脏脂肪指数;VFA测定;内脏脂肪面积测定,人体成分,cm²,numeric
+ER-TC-006,骨骼肌,SMM,骨骼肌量;骨骼肌质量;SMM测定;骨骼肌测定,人体成分,kg,numeric
+ER-TC-007,体脂肪量,BFM,脂肪量;体脂量;BFM测定;体脂肪测定,人体成分,kg,numeric
+ER-TC-008,腰臀比,WHR,腰臀比例;WHR测定;腰围臀围比;腰臀比测定,人体成分,,numeric
+YB-JC-001,收缩压,SBP,高压;收缩压测定;SBP测定;收缩压值,一般检查,mmHg,numeric
+YB-JC-002,舒张压,DBP,低压;舒张压测定;DBP测定;舒张压值,一般检查,mmHg,numeric
+YB-JC-003,身高,Height,身高测定;Height测量;身长;身高值,一般检查,cm,numeric
+YB-JC-004,体重,Weight,体重测定;Weight测量;体质量;体重值,一般检查,kg,numeric
+YB-JC-005,脉搏,Pulse,心率;脉率;Pulse测定;脉搏值,一般检查,bpm,numeric
+HY-SW-001,鸡蛋IgG,EGG-IgG,鸡蛋特异性IgG抗体;鸡蛋不耐受IgG;鸡蛋IgG抗体;蛋类IgG,食物不耐受,U/mL,numeric
+HY-SW-002,牛奶IgG,MILK-IgG,牛奶特异性IgG抗体;牛奶不耐受IgG;牛奶IgG抗体;乳制品IgG,食物不耐受,U/mL,numeric
+HY-SW-003,螃蟹IgG,CRAB-IgG,螃蟹特异性IgG抗体;螃蟹不耐受IgG;螃蟹IgG抗体;蟹类IgG,食物不耐受,U/mL,numeric
+HY-SW-004,虾IgG,SHRIMP-IgG,虾特异性IgG抗体;虾不耐受IgG;虾IgG抗体;虾类IgG,食物不耐受,U/mL,numeric
+HY-SW-005,小麦IgG,WHEAT-IgG,小麦特异性IgG抗体;小麦不耐受IgG;小麦IgG抗体;谷物IgG,食物不耐受,U/mL,numeric
+HY-SW-006,玉米IgG,CORN-IgG,玉米特异性IgG抗体;玉米不耐受IgG;玉米IgG抗体;谷物玉米IgG,食物不耐受,U/mL,numeric
+HY-SW-007,大豆IgG,SOY-IgG,大豆特异性IgG抗体;大豆不耐受IgG;大豆IgG抗体;豆类IgG,食物不耐受,U/mL,numeric
+HY-SW-008,西红柿IgG,TOMATO-IgG,西红柿特异性IgG抗体;番茄IgG抗体;西红柿不耐受IgG;番茄IgG,食物不耐受,U/mL,numeric
+HY-SW-009,蘑菇IgG,MUSHROOM-IgG,蘑菇特异性IgG抗体;蘑菇不耐受IgG;蘑菇IgG抗体;菌菇IgG,食物不耐受,U/mL,numeric
+HY-SW-010,牛肉IgG,BEEF-IgG,牛肉特异性IgG抗体;牛肉不耐受IgG;牛肉IgG抗体;肉类牛肉IgG,食物不耐受,U/mL,numeric
+HY-SW-011,鸡肉IgG,CHICKEN-IgG,鸡肉特异性IgG抗体;鸡肉不耐受IgG;鸡肉IgG抗体;肉类鸡肉IgG,食物不耐受,U/mL,numeric
+HY-SW-012,猪肉IgG,PORK-IgG,猪肉特异性IgG抗体;猪肉不耐受IgG;猪肉IgG抗体;肉类猪肉IgG,食物不耐受,U/mL,numeric
+HY-SW-013,鳕鱼IgG,COD-IgG,鳕鱼特异性IgG抗体;鳕鱼不耐受IgG;鳕鱼IgG抗体;鱼类鳕鱼IgG,食物不耐受,U/mL,numeric
+HY-SW-014,大米IgG,RICE-IgG,大米特异性IgG抗体;大米不耐受IgG;大米IgG抗体;谷物大米IgG,食物不耐受,U/mL,numeric
+HY-HPV-001,HPV16,HPV16,人乳头瘤病毒16型;HPV 16;16型HPV;HPV16型,HPV,,qualitative
+HY-HPV-002,HPV18,HPV18,人乳头瘤病毒18型;HPV 18;18型HPV;HPV18型,HPV,,qualitative
+HY-HPV-003,HPV6,HPV6,人乳头瘤病毒6型;HPV 6;6型HPV;HPV6型,HPV,,qualitative
+HY-HPV-004,HPV11,HPV11,人乳头瘤病毒11型;HPV 11;11型HPV;HPV11型,HPV,,qualitative
+HY-HPV-005,HPV31,HPV31,人乳头瘤病毒31型;HPV 31;31型HPV;HPV31型,HPV,,qualitative
+HY-HPV-006,HPV33,HPV33,人乳头瘤病毒33型;HPV 33;33型HPV;HPV33型,HPV,,qualitative
+HY-HPV-007,HPV35,HPV35,人乳头瘤病毒35型;HPV 35;35型HPV;HPV35型,HPV,,qualitative
+HY-HPV-008,HPV39,HPV39,人乳头瘤病毒39型;HPV 39;39型HPV;HPV39型,HPV,,qualitative
+HY-HPV-009,HPV42,HPV42,人乳头瘤病毒42型;HPV 42;42型HPV;HPV42型,HPV,,qualitative
+HY-HPV-010,HPV43,HPV43,人乳头瘤病毒43型;HPV 43;43型HPV;HPV43型,HPV,,qualitative
+HY-HPV-011,HPV44,HPV44,人乳头瘤病毒44型;HPV 44;44型HPV;HPV44型,HPV,,qualitative
+HY-HPV-012,HPV45,HPV45,人乳头瘤病毒45型;HPV 45;45型HPV;HPV45型,HPV,,qualitative
+HY-HPV-013,HPV51,HPV51,人乳头瘤病毒51型;HPV 51;51型HPV;HPV51型,HPV,,qualitative
+HY-HPV-014,HPV52,HPV52,人乳头瘤病毒52型;HPV 52;52型HPV;HPV52型,HPV,,qualitative
+HY-HPV-015,HPV53,HPV53,人乳头瘤病毒53型;HPV 53;53型HPV;HPV53型,HPV,,qualitative
+HY-HPV-016,HPV56,HPV56,人乳头瘤病毒56型;HPV 56;56型HPV;HPV56型,HPV,,qualitative
+HY-HPV-017,HPV58,HPV58,人乳头瘤病毒58型;HPV 58;58型HPV;HPV58型,HPV,,qualitative
+HY-HPV-018,HPV59,HPV59,人乳头瘤病毒59型;HPV 59;59型HPV;HPV59型,HPV,,qualitative
+HY-HPV-019,HPV66,HPV66,人乳头瘤病毒66型;HPV 66;66型HPV;HPV66型,HPV,,qualitative
+HY-HPV-020,HPV68,HPV68,人乳头瘤病毒68型;HPV 68;68型HPV;HPV68型,HPV,,qualitative
+HY-HPV-021,HPV73,HPV73,人乳头瘤病毒73型;HPV 73;73型HPV;HPV73型,HPV,,qualitative
+HY-HPV-022,HPV81,HPV81,人乳头瘤病毒81型;HPV 81;81型HPV;HPV81型,HPV,,qualitative
+HY-HPV-023,HPV82,HPV82,人乳头瘤病毒82型;HPV 82;82型HPV;HPV82型,HPV,,qualitative
+HY-ROMA-001,绝经前ROMA,PRE-ROMA,ROMA绝经前;绝经前ROMA指数;PreROMA;绝经前ROMA值,ROMA指数,%,numeric
+HY-ROMA-002,绝经后ROMA,POST-ROMA,ROMA绝经后;绝经后ROMA指数;PostROMA;绝经后ROMA值,ROMA指数,%,numeric
+HY-HGH-001,生长激素,HGH,人生长激素;HGH测定;GH;生长激素测定,生长激素,ng/mL,numeric
