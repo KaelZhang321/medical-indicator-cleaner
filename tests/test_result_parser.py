@@ -271,3 +271,48 @@ def test_parse_kg_per_sqm() -> None:
         "judgment": None,
         "ref_in_value": None,
     }
+
+
+def test_parse_reference_range_simple() -> None:
+    parser = ResultParser()
+
+    result = parser.parse_reference_range("0.00-5.800")
+
+    assert result == {
+        "ref_min": 0.0,
+        "ref_max": 5.8,
+        "ref_text": None,
+        "ref_conditions": [],
+        "is_simple_range": True,
+    }
+
+
+def test_parse_reference_range_less_than() -> None:
+    parser = ResultParser()
+
+    result = parser.parse_reference_range("<1.0")
+
+    assert result["ref_min"] is None
+    assert result["ref_max"] == 1.0
+    assert result["is_simple_range"] is True
+
+
+def test_parse_reference_range_text() -> None:
+    parser = ResultParser()
+
+    result = parser.parse_reference_range("阴性（-）")
+
+    assert result["ref_text"] == "阴性"
+    assert result["is_simple_range"] is False
+
+
+def test_parse_reference_range_conditions() -> None:
+    parser = ResultParser()
+
+    result = parser.parse_reference_range("卵泡期:0.057-0.893；排卵期：0.121-12.0")
+
+    assert result["is_simple_range"] is False
+    assert result["ref_conditions"] == [
+        {"condition": "卵泡期", "ref_min": 0.057, "ref_max": 0.893},
+        {"condition": "排卵期", "ref_min": 0.121, "ref_max": 12.0},
+    ]

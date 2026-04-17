@@ -205,6 +205,30 @@ def test_process_hy_unit_preserved(preprocessor: P0Preprocessor, sample_json: di
     assert hy_row["numeric_value"] == 0.07
 
 
+def test_process_reference_range_and_abnormal_status(preprocessor: P0Preprocessor, sample_json: dict) -> None:
+    sample_json["data"]["departments"][2]["items"][0]["referenceRange"] = "90-120"
+    sample_json["data"]["departments"][2]["items"][0]["abnormalFlag"] = None
+    sample_json["data"]["departments"][2]["items"][0]["resultValue"] = "124"
+
+    df = preprocessor.process(sample_json)
+    row = df.loc[df["item_name"] == "收缩压"].iloc[0]
+
+    assert row["ref_min"] == 90.0
+    assert row["ref_max"] == 120.0
+    assert row["is_abnormal"] is True
+    assert row["abnormal_direction"] == "high"
+    assert row["abnormal_flag_source"] is None
+
+
+def test_process_unit_normalized(preprocessor: P0Preprocessor, sample_json: dict) -> None:
+    sample_json["data"]["departments"][0]["items"][0]["unit"] = "U/ml"
+
+    df = preprocessor.process(sample_json)
+    row = df.loc[df["dept_code"] == "HY"].iloc[0]
+
+    assert row["unit"] == "U/mL"
+
+
 def test_process_batch_multiple_files(preprocessor: P0Preprocessor, sample_json: dict, tmp_path: Path) -> None:
     first = tmp_path / "first.json"
     second = tmp_path / "second.json"

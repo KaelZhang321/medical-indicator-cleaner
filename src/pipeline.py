@@ -68,8 +68,8 @@ class StandardizationPipeline:
         if path.is_dir():
             return self.run_batch(str(path), output_dir=output_dir)
 
-        names = self._load_input_names(path)
-        results = self._standardize_names(names)
+        dataframe = self._load_input_dataframe(path)
+        results = self._standardize_dataframe(dataframe)
         results = self.ai_reviewer.review(results)
         classified = self.reviewer.classify(results)
         self.reviewer.export_csv(classified, output_dir or self.output_dir)
@@ -80,63 +80,86 @@ class StandardizationPipeline:
         paths = sorted(Path(input_dir).glob("*.json"))
         frames = [self.preprocessor.process_file(str(path)) for path in paths]
         dataframe = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["item_name"])
-        names = dataframe["item_name"].fillna("").astype(str).tolist()
-        results = self._standardize_names(names)
+        results = self._standardize_dataframe(dataframe)
         results = self.ai_reviewer.review(results)
         classified = self.reviewer.classify(results)
         self.reviewer.export_csv(classified, output_dir or self.output_dir)
         self._print_report(classified)
         return classified
 
-    def _load_input_names(self, path: Path) -> list[str]:
+    def _load_input_dataframe(self, path: Path) -> pd.DataFrame:
         if path.suffix.lower() == ".csv":
             dataframe = pd.read_csv(path)
             if "item_name" not in dataframe.columns:
                 raise ValueError("CSV input must contain an item_name column")
-            return dataframe["item_name"].fillna("").astype(str).tolist()
+            return dataframe.fillna("")
 
-        dataframe = self.preprocessor.process_file(str(path))
-        return dataframe["item_name"].fillna("").astype(str).tolist()
+        return self.preprocessor.process_file(str(path))
 
-    def _standardize_names(self, names: list[str]) -> list[dict[str, Any]]:
-        results: list[dict[str, Any]] = []
-        for name in names:
-            clean_result = self.cleaner.clean(name)
-            results.append(self._result_from_clean(clean_result))
-        return results
+    def _standardize_dataframe(self, dataframe: pd.DataFrame) -> list[dict[str, Any]]:
+        names = dataframe["item_name"].fillna("").astype(str).tolist()
+        clean_results = self.cleaner.clean_batch(names)
+        base_results = [self._result_from_clean(clean_result, row.to_dict()) for clean_result, (_, row) in zip(clean_results, dataframe.iterrows())]
 
-    def _result_from_clean(self, clean_result: CleanResult) -> dict[str, Any]:
+        pending_indices = [index for index, row in enumerate(base_results) if row["confidence"] < 1.0]
+        if not pending_indices or not self.matcher.is_index_loaded():
+            return base_results
+
+        pending_queries = [base_results[index]["cleaned_name"] for index in pending_indices]
+        if hasattr(self.matcher, "search_batch"):
+            batch_candidates = self.matcher.search_batch(pending_queries, top_k=int(self.config["index"]["top_k"]))
+        else:
+            batch_candidates = [self.matcher.search(query, top_k=int(self.config["index"]["top_k"])) for query in pending_queries]
+
+        for index, candidates in zip(pending_indices, batch_candidates):
+            self._apply_l2_result(base_results[index], candidates)
+
+        return base_results
+
+    def _result_from_clean(self, clean_result: CleanResult, row: dict[str, Any]) -> dict[str, Any]:
         base = {
+            **row,
             "original_name": clean_result.original,
             "cleaned_name": clean_result.cleaned,
             "abbreviation": clean_result.abbreviation or "",
             "standard_name": clean_result.standard_name or "",
             "standard_code": clean_result.standard_code or "",
             "category": clean_result.category or "",
+            "standard_unit": "",
+            "result_type": "",
             "confidence": clean_result.confidence,
             "match_source": clean_result.match_source,
             "top_candidates": [],
         }
         if clean_result.confidence >= 1.0:
+            standard_row = self.dict_manager.standard_dict.loc[
+                self.dict_manager.standard_dict["code"] == clean_result.standard_code
+            ].iloc[0]
+            base["standard_unit"] = standard_row["common_unit"]
+            base["result_type"] = standard_row["result_type"]
             return base
-
-        if not self.matcher.is_index_loaded():
-            return base
-
-        candidates = self.matcher.search(clean_result.cleaned, top_k=int(self.config["index"]["top_k"]))
-        base["top_candidates"] = candidates
-        if candidates:
-            top = candidates[0]
-            base.update(
-                {
-                    "standard_name": top["standard_name"],
-                    "standard_code": top["standard_code"],
-                    "category": top["category"],
-                    "confidence": top["score"],
-                    "match_source": "l2_embedding",
-                }
-            )
         return base
+
+    def _apply_l2_result(self, base: dict[str, Any], candidates: list[dict[str, Any]]) -> None:
+        base["top_candidates"] = candidates
+        if not candidates:
+            return
+
+        top = candidates[0]
+        base.update(
+            {
+                "standard_name": top["standard_name"],
+                "standard_code": top["standard_code"],
+                "category": top["category"],
+                "confidence": top["score"],
+                "match_source": "l2_embedding",
+            }
+        )
+        standard_row = self.dict_manager.standard_dict.loc[
+            self.dict_manager.standard_dict["code"] == top["standard_code"]
+        ].iloc[0]
+        base["standard_unit"] = standard_row["common_unit"]
+        base["result_type"] = standard_row["result_type"]
 
     def _print_report(self, classified: dict[str, Any]) -> None:
         stats = classified["stats"]

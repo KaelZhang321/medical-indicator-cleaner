@@ -6,7 +6,9 @@ from typing import Any
 
 import pandas as pd
 
+from src.abnormal_detector import derive_abnormal_status
 from src.result_parser import ResultParser
+from src.unit_normalizer import UnitNormalizer
 from src.utils import setup_logger
 
 
@@ -23,6 +25,7 @@ class P0Preprocessor:
         self.enable_deduplicate = bool(preprocessing.get("deduplicate", True))
         self.enable_result_parse = bool(preprocessing.get("parse_result_value", True))
         self.result_parser = ResultParser()
+        self.unit_normalizer = UnitNormalizer()
         self.logger = setup_logger(self.__class__.__name__)
 
     def _flatten_items(self, json_data: dict[str, Any]) -> pd.DataFrame:
@@ -116,13 +119,34 @@ class P0Preprocessor:
             self.result_parser.parse(row.result_value_raw, row.unit_raw or "")
             for row in df.itertuples(index=False)
         ]
+        reference_records = [
+            self.result_parser.parse_reference_range(row.reference_range_raw)
+            for row in df.itertuples(index=False)
+        ]
         parsed_df = pd.DataFrame(parsed_records)
         parsed_df = parsed_df.rename(columns={"unit": "unit_parsed"})
+        reference_df = pd.DataFrame(reference_records)
 
-        result = pd.concat([df.reset_index(drop=True), parsed_df.reset_index(drop=True)], axis=1)
+        result = pd.concat(
+            [df.reset_index(drop=True), parsed_df.reset_index(drop=True), reference_df.reset_index(drop=True)],
+            axis=1,
+        )
         result["unit"] = result["unit_raw"].fillna("").astype(str).str.strip()
         unit_missing = result["unit"] == ""
         result.loc[unit_missing, "unit"] = result.loc[unit_missing, "unit_parsed"]
+        result["unit"] = result["unit"].apply(self.unit_normalizer.normalize)
+        abnormal_records = [
+            derive_abnormal_status(
+                row.numeric_value if pd.notna(row.numeric_value) else None,
+                row.ref_min if pd.notna(row.ref_min) else None,
+                row.ref_max if pd.notna(row.ref_max) else None,
+                row.abnormal_flag,
+            )
+            for row in result.itertuples(index=False)
+        ]
+        abnormal_df = pd.DataFrame(abnormal_records)
+        abnormal_df = abnormal_df.astype(object).where(pd.notna(abnormal_df), None)
+        result = pd.concat([result.reset_index(drop=True), abnormal_df.reset_index(drop=True)], axis=1)
         return result
 
     def process_file(self, json_path: str) -> pd.DataFrame:

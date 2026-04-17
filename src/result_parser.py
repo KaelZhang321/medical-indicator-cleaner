@@ -89,6 +89,69 @@ class ResultParser:
         result["text_value"] = self._clean_text_token(normalized)
         return result
 
+    def parse_reference_range(self, raw_ref: str | None) -> dict[str, object]:
+        empty = {
+            "ref_min": None,
+            "ref_max": None,
+            "ref_text": None,
+            "ref_conditions": [],
+            "is_simple_range": False,
+        }
+        text = self._normalize_text(raw_ref or "")
+        if not text or text in {"~", "～", "-", "—"}:
+            return empty
+
+        condition_parts = re.split(r"[;；]", text)
+        conditions = []
+        for part in condition_parts:
+            condition_match = re.match(r"^([^:：]+)[:：]\s*([+-]?\d+(?:\.\d+)?)\s*[-~～]\s*([+-]?\d+(?:\.\d+)?)$", part.strip())
+            if condition_match:
+                conditions.append(
+                    {
+                        "condition": condition_match.group(1).strip(),
+                        "ref_min": float(condition_match.group(2)),
+                        "ref_max": float(condition_match.group(3)),
+                    }
+                )
+        if conditions:
+            result = dict(empty)
+            result["ref_conditions"] = conditions
+            return result
+
+        range_match = re.fullmatch(r"([+-]?\d+(?:\.\d+)?)\s*[-~～]\s*([+-]?\d+(?:\.\d+)?)", text)
+        if range_match:
+            return {
+                "ref_min": float(range_match.group(1)),
+                "ref_max": float(range_match.group(2)),
+                "ref_text": None,
+                "ref_conditions": [],
+                "is_simple_range": True,
+            }
+
+        less_than_match = re.fullmatch(r"<\s*([+-]?\d+(?:\.\d+)?)", text)
+        if less_than_match:
+            return {
+                "ref_min": None,
+                "ref_max": float(less_than_match.group(1)),
+                "ref_text": None,
+                "ref_conditions": [],
+                "is_simple_range": True,
+            }
+
+        greater_than_match = re.fullmatch(r">\s*([+-]?\d+(?:\.\d+)?)", text)
+        if greater_than_match:
+            return {
+                "ref_min": float(greater_than_match.group(1)),
+                "ref_max": None,
+                "ref_text": None,
+                "ref_conditions": [],
+                "is_simple_range": True,
+            }
+
+        result = dict(empty)
+        result["ref_text"] = self._extract_meaningful_text(text) or self._clean_text_token(text)
+        return result
+
     def _empty_result(self) -> dict[str, float | str | None]:
         return {
             "numeric_value": None,

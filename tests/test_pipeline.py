@@ -9,6 +9,9 @@ from src.pipeline import StandardizationPipeline
 
 
 class FakeMatcher:
+    def __init__(self) -> None:
+        self.batch_queries: list[list[str]] = []
+
     def is_index_loaded(self) -> bool:
         return True
 
@@ -28,6 +31,10 @@ class FakeMatcher:
                     "score": 0.91,
                 }
             ][:top_k]
+
+    def search_batch(self, queries: list[str], top_k: int = 5) -> list[list[dict]]:
+        self.batch_queries.append(queries)
+        return [self.search(query, top_k=top_k) for query in queries]
 
 
 class FakeAIReviewer:
@@ -93,10 +100,10 @@ def sample_json() -> dict:
     }
 
 
-def build_pipeline(tmp_path: Path) -> StandardizationPipeline:
+def build_pipeline(tmp_path: Path, matcher: FakeMatcher | None = None) -> StandardizationPipeline:
     return StandardizationPipeline(
         config_path="config/settings.yaml",
-        matcher=FakeMatcher(),
+        matcher=matcher or FakeMatcher(),
         output_dir=str(tmp_path),
     )
 
@@ -111,6 +118,22 @@ def test_pipeline_json_input(tmp_path: Path) -> None:
     assert classified["stats"]["auto_count"] == 2
 
 
+def test_pipeline_json_output_preserves_p0_fields(tmp_path: Path) -> None:
+    input_path = tmp_path / "sample.json"
+    input_path.write_text(json.dumps(sample_json(), ensure_ascii=False), encoding="utf-8")
+
+    classified = build_pipeline(tmp_path).run(str(input_path))
+    row = classified["auto_mapped"][0]
+
+    assert row["study_id"] == "study-001"
+    assert row["exam_time"] == "2025-12-12 08:01:20"
+    assert row["result_value_raw"] == "1.74"
+    assert row["numeric_value"] == 1.74
+    assert row["unit"] == "IU/mL"
+    assert "standard_unit" in row
+    assert "result_type" in row
+
+
 def test_pipeline_csv_input(tmp_path: Path) -> None:
     input_path = tmp_path / "sample.csv"
     pd.DataFrame({"item_name": ["总胆固醇", "胆固醇偏写", "某某新检测项"]}).to_csv(input_path, index=False)
@@ -121,6 +144,16 @@ def test_pipeline_csv_input(tmp_path: Path) -> None:
     assert classified["stats"]["auto_count"] == 1
     assert classified["stats"]["review_count"] == 1
     assert classified["stats"]["manual_count"] == 1
+
+
+def test_pipeline_uses_l2_batch_search(tmp_path: Path) -> None:
+    matcher = FakeMatcher()
+    input_path = tmp_path / "sample.csv"
+    pd.DataFrame({"item_name": ["总胆固醇", "胆固醇偏写", "某某新检测项"]}).to_csv(input_path, index=False)
+
+    build_pipeline(tmp_path, matcher=matcher).run(str(input_path))
+
+    assert matcher.batch_queries == [["胆固醇偏写", "某某新检测项"]]
 
 
 def test_pipeline_output_files_exist(tmp_path: Path) -> None:
