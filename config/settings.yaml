@@ -30,3 +30,7 @@ departments:
 preprocessing:
   deduplicate: true
   parse_result_value: true
+
+ai_review:
+  enabled: false
+  model: doubao-seed-2-0-pro-260215

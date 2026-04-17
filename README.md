@@ -25,6 +25,9 @@ python3 -m pip install -r requirements.txt
 # 构建向量索引
 python3 scripts/build_index.py --config config/settings.yaml
 
+# 配置火山方舟 API Key（仅当前 shell，会话结束失效）
+export ARK_API_KEY="你的火山方舟 API Key"
+
 # 执行清洗（将脏数据放入 data/input/）
 python3 scripts/run_clean.py --input data/input/your_data.csv --output data/output
 
@@ -103,6 +106,39 @@ python3 scripts/review_feedback.py --input data/output/need_review_confirmed.csv
 
 脚本会通过 `DictManager.add_alias()` 写入 `data/alias_dict.csv`，自动跳过重复别名。再次运行清洗时，这些别名会在 L1 精确命中。
 
+## AI 复核
+
+项目支持在 L2 之后、L4 最终分层之前接入火山方舟模型做二次审核：
+
+- AI 只处理原本会落入 `need_review` 或 `manual_required` 的记录
+- AI 能明确判断时，会把结果提升为自动归一
+- AI 仍然无法可靠判断时，会保留到最终人工审核
+
+当前默认模型：
+
+```yaml
+ai_review:
+  enabled: false
+  model: doubao-seed-2-0-pro-260215
+```
+
+启用方式：
+
+1. 在 `config/settings.yaml` 中把 `ai_review.enabled` 改为 `true`
+2. 在运行环境设置 `ARK_API_KEY`
+
+```bash
+export ARK_API_KEY="你的火山方舟 API Key"
+python3 scripts/run_clean.py --input data/input/sample_dirty.csv --output data/output
+```
+
+说明：
+
+- API Key 只从环境变量 `ARK_API_KEY` 读取，不会写入仓库
+- Ark 接口按 OpenAI 兼容协议调用，默认 `base_url` 为 `https://ark.cn-beijing.volces.com/api/v3`
+- AI 返回 `auto_map` 时才会自动归一；返回 `human_review` 时会进入最终人工处理
+- 若未配置 `ARK_API_KEY`，AI 复核层会自动跳过，不影响主流程执行
+
 ## 注意事项
 
 - 医疗指标标准化不是纯大模型清洗，本项目采用规则优先、向量召回兜底、人工审核闭环。
@@ -111,6 +147,7 @@ python3 scripts/review_feedback.py --input data/output/need_review_confirmed.csv
 - `scripts/build_index.py` 首次运行会下载 `shibing624/text2vec-base-chinese-sentence`，需要可访问 Hugging Face 或提前准备模型缓存。
 - 当前环境下真实模型下载/索引构建可能受网络和 Python 运行时影响；核心 L2 逻辑已通过 deterministic fake encoder 测试覆盖。
 - 未构建索引时，Pipeline 不会强制加载 L2 模型，会稳定执行 L1-only 清洗。
+- AI 复核默认关闭；启用后会调用火山方舟模型 `doubao-seed-2-0-pro-260215`，并要求环境变量 `ARK_API_KEY` 存在。
 - `data/output/*.csv` 默认被忽略，不应提交实际清洗结果；`data/input/sample_dirty.csv` 是回归测试样本，已显式纳入版本管理。
 - 变更 L1 正则、字典格式、CSV 输出列名时，应先补充对应回归测试。
 

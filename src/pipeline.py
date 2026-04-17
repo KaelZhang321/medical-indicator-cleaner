@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 
+from src.ai_review import AIReviewProcessor, ArkChatClient
 from src.dict_manager import DictManager
 from src.l1_rule_cleaner import CleanResult, L1RuleCleaner
 from src.l2_embedding_matcher import L2EmbeddingMatcher
@@ -20,6 +21,7 @@ class StandardizationPipeline:
         self,
         config_path: str = "config/settings.yaml",
         matcher: Any | None = None,
+        ai_reviewer: Any | None = None,
         output_dir: str | None = None,
     ) -> None:
         self.config = load_config(config_path)
@@ -31,6 +33,7 @@ class StandardizationPipeline:
         self.preprocessor = P0Preprocessor(self.config)
         self.cleaner = L1RuleCleaner(self.dict_manager)
         self.matcher = matcher or self._init_matcher()
+        self.ai_reviewer = ai_reviewer or self._init_ai_reviewer()
         self.reviewer = L4Review(
             auto_threshold=float(self.config["thresholds"]["auto_map"]),
             review_threshold=float(self.config["thresholds"]["need_review"]),
@@ -49,6 +52,17 @@ class StandardizationPipeline:
         matcher.load_index(str(index_path))
         return matcher
 
+    def _init_ai_reviewer(self) -> AIReviewProcessor:
+        ai_review_cfg = self.config.get("ai_review", {})
+        enabled = bool(ai_review_cfg.get("enabled", False))
+        model = ai_review_cfg.get("model", "")
+        client = ArkChatClient(model=model)
+        return AIReviewProcessor(
+            enabled=enabled,
+            client=client,
+            standard_dict=self.dict_manager.standard_dict[["code", "standard_name", "category"]],
+        )
+
     def run(self, input_path: str, output_dir: str | None = None) -> dict[str, Any]:
         path = Path(input_path)
         if path.is_dir():
@@ -56,6 +70,7 @@ class StandardizationPipeline:
 
         names = self._load_input_names(path)
         results = self._standardize_names(names)
+        results = self.ai_reviewer.review(results)
         classified = self.reviewer.classify(results)
         self.reviewer.export_csv(classified, output_dir or self.output_dir)
         self._print_report(classified)
@@ -67,6 +82,7 @@ class StandardizationPipeline:
         dataframe = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["item_name"])
         names = dataframe["item_name"].fillna("").astype(str).tolist()
         results = self._standardize_names(names)
+        results = self.ai_reviewer.review(results)
         classified = self.reviewer.classify(results)
         self.reviewer.export_csv(classified, output_dir or self.output_dir)
         self._print_report(classified)

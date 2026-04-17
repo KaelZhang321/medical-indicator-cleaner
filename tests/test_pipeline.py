@@ -30,6 +30,28 @@ class FakeMatcher:
             ][:top_k]
 
 
+class FakeAIReviewer:
+    def review(self, results: list[dict]) -> list[dict]:
+        reviewed = []
+        for result in results:
+            if result["original_name"] == "胆固醇偏写":
+                updated = dict(result)
+                updated.update(
+                    {
+                        "standard_code": "HY-BZ-001",
+                        "standard_name": "总胆固醇",
+                        "category": "血脂",
+                        "confidence": 0.97,
+                        "match_source": "ai_review",
+                        "ai_review": {"action": "auto_map", "reason": "AI明确判断"},
+                    }
+                )
+                reviewed.append(updated)
+            else:
+                reviewed.append(result)
+        return reviewed
+
+
 def sample_json() -> dict:
     return {
         "data": {
@@ -152,6 +174,23 @@ def test_pipeline_no_data_loss(tmp_path: Path) -> None:
         + len(classified["manual_required"])
     )
     assert output_count == 3
+
+
+def test_pipeline_ai_review_promotes_review_candidate(tmp_path: Path) -> None:
+    input_path = tmp_path / "sample.csv"
+    pd.DataFrame({"item_name": ["总胆固醇", "胆固醇偏写"]}).to_csv(input_path, index=False)
+    pipeline = StandardizationPipeline(
+        config_path="config/settings.yaml",
+        matcher=FakeMatcher(),
+        ai_reviewer=FakeAIReviewer(),
+        output_dir=str(tmp_path),
+    )
+
+    classified = pipeline.run(str(input_path))
+
+    assert classified["stats"]["total"] == 2
+    assert classified["stats"]["auto_count"] == 2
+    assert any(row["match_source"] == "ai_review" for row in classified["auto_mapped"])
 
 
 def test_pipeline_runs_without_l2_index(tmp_path: Path) -> None:
