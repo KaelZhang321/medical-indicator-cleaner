@@ -18,8 +18,8 @@ logger = setup_logger("llm_generator")
 class LLMGenerator:
     """Batch-generate data assets via LLM API calls."""
 
-    def __init__(self, model: str = "doubao-seed-2-0-pro-260215", delay: float = 0.5) -> None:
-        self.client = ArkChatClient(model=model)
+    def __init__(self, model: str = "doubao-seed-2-0-pro-260215", delay: float = 0.5, client: Any | None = None) -> None:
+        self.client = client or ArkChatClient(model=model)
         self.delay = delay
         if not self.client.is_configured():
             raise RuntimeError("ARK_API_KEY not set. Export it before running: export ARK_API_KEY='your-key'")
@@ -44,13 +44,15 @@ class LLMGenerator:
 
     def generate_aliases(self, standard_dict: pd.DataFrame, output_path: str) -> dict[str, list[str]]:
         """For each indicator, ask LLM to generate additional aliases."""
-        results: dict[str, list[str]] = {}
+        results = self._load_existing_dict(output_path)
         system = (
             "你是医学检验专家。用户会给你一个检验指标信息，请补充更多中文别名、英文缩写变体、"
             "常见错别字、口语化叫法。返回 JSON: {\"aliases\": [\"别名1\", \"别名2\", ...]}。"
             "不要重复用户已给出的别名。只返回 JSON。"
         )
         for row in tqdm(standard_dict.itertuples(index=False), total=len(standard_dict), desc="生成别名"):
+            if row.code in results:
+                continue
             user = json.dumps({
                 "standard_name": row.standard_name,
                 "abbreviation": row.abbreviation,
@@ -62,9 +64,9 @@ class LLMGenerator:
             if new_aliases:
                 results[row.code] = [a.strip() for a in new_aliases if a.strip()]
                 logger.info("%s: +%d aliases", row.code, len(results[row.code]))
+                self._write_json(output_path, results)
 
-        ensure_dir(Path(output_path).parent)
-        Path(output_path).write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._write_json(output_path, results)
         logger.info("Aliases saved to %s (%d entries)", output_path, len(results))
         return results
 
@@ -74,7 +76,8 @@ class LLMGenerator:
 
     def generate_reference_ranges(self, standard_dict: pd.DataFrame, output_path: str) -> list[dict]:
         """Generate standard reference ranges for each numeric indicator."""
-        results: list[dict] = []
+        results = self._load_existing_list(output_path)
+        existing_codes = {item.get("standard_code", "") for item in results}
         system = (
             "你是医学检验专家。为给定检验指标提供标准参考范围。返回 JSON:\n"
             '{"general": {"ref_min": number, "ref_max": number}, '
@@ -86,6 +89,8 @@ class LLMGenerator:
         )
         numeric_rows = standard_dict[standard_dict["result_type"].isin(["numeric", "mixed"])]
         for row in tqdm(numeric_rows.itertuples(index=False), total=len(numeric_rows), desc="生成参考范围"):
+            if row.code in existing_codes:
+                continue
             user = json.dumps({
                 "standard_name": row.standard_name,
                 "abbreviation": row.abbreviation,
@@ -98,9 +103,9 @@ class LLMGenerator:
                 resp["standard_name"] = row.standard_name
                 resp["unit"] = row.common_unit
                 results.append(resp)
+                self._write_json(output_path, results)
 
-        ensure_dir(Path(output_path).parent)
-        Path(output_path).write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._write_json(output_path, results)
         logger.info("Reference ranges saved to %s (%d entries)", output_path, len(results))
         return results
 
@@ -110,7 +115,8 @@ class LLMGenerator:
 
     def generate_risk_weights(self, standard_dict: pd.DataFrame, output_path: str) -> list[dict]:
         """Generate risk weight and category for each indicator."""
-        results: list[dict] = []
+        results = self._load_existing_list(output_path)
+        existing_codes = {item.get("standard_code", "") for item in results}
         system = (
             "你是临床医学专家。评估给定检验指标异常时的健康风险程度。返回 JSON:\n"
             '{"risk_weight": float(0.0-1.0), "risk_category": "critical"|"warning"|"info", '
@@ -118,6 +124,8 @@ class LLMGenerator:
             "risk_weight 越高表示该指标异常时越需要关注。只返回 JSON。"
         )
         for row in tqdm(standard_dict.itertuples(index=False), total=len(standard_dict), desc="生成风险权重"):
+            if row.code in existing_codes:
+                continue
             user = json.dumps({
                 "standard_name": row.standard_name,
                 "abbreviation": row.abbreviation,
@@ -127,9 +135,9 @@ class LLMGenerator:
             if resp:
                 resp["standard_code"] = row.code
                 results.append(resp)
+                self._write_json(output_path, results)
 
-        ensure_dir(Path(output_path).parent)
-        Path(output_path).write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._write_json(output_path, results)
         logger.info("Risk weights saved to %s (%d entries)", output_path, len(results))
         return results
 
@@ -156,15 +164,46 @@ class LLMGenerator:
             ("肝功能补充", "目前已有ALT/AST/GGT/ALP/TBIL/DBIL/IBIL/TP/ALB/GLB。请补充：前白蛋白PA、胆汁酸TBA、腺苷脱氨酶ADA等"),
         ]
 
-        all_indicators: list[dict] = []
+        all_indicators = self._load_existing_list(output_path)
+        seen_names = {item.get("standard_name", "") for item in all_indicators}
         for category, hint in tqdm(categories_to_expand, desc="生成新增指标"):
             user = json.dumps({"category": category, "hint": hint}, ensure_ascii=False)
             resp = self._call(system, user)
             indicators = resp.get("indicators", [])
-            all_indicators.extend(indicators)
+            for indicator in indicators:
+                if indicator.get("standard_name", "") in seen_names:
+                    continue
+                if not indicator.get("category"):
+                    indicator["category"] = category
+                all_indicators.append(indicator)
+                seen_names.add(indicator.get("standard_name", ""))
             logger.info("%s: +%d indicators", category, len(indicators))
+            self._write_json(output_path, all_indicators)
 
-        ensure_dir(Path(output_path).parent)
-        Path(output_path).write_text(json.dumps(all_indicators, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._write_json(output_path, all_indicators)
         logger.info("New indicators saved to %s (%d entries)", output_path, len(all_indicators))
         return all_indicators
+
+    def _load_existing_dict(self, path: str) -> dict[str, list[str]]:
+        file_path = Path(path)
+        if not file_path.exists():
+            return {}
+        try:
+            data = json.loads(file_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def _load_existing_list(self, path: str) -> list[dict]:
+        file_path = Path(path)
+        if not file_path.exists():
+            return []
+        try:
+            data = json.loads(file_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return []
+        return data if isinstance(data, list) else []
+
+    def _write_json(self, path: str, payload: Any) -> None:
+        ensure_dir(Path(path).parent)
+        Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

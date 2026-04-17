@@ -183,6 +183,43 @@ python3 scripts/build_ml_features.py --inputs output_a.csv output_b.csv --output
 - `standard_code`、`exam_time`、`numeric_value` 完整
 - 已按当前 pipeline 跑出的标准化输出
 
+## 数据资产补全工具链
+
+项目已提供 `scripts/data_enrichment/` 工具链，用于批量补全：
+
+- aliases
+- 参考范围
+- 风险权重
+- 新增指标
+
+一键入口：
+
+```bash
+export ARK_API_KEY="你的火山方舟 API Key"
+
+# 完整流程
+python3 scripts/data_enrichment/run_enrichment.py --all
+
+# 分步执行
+python3 scripts/data_enrichment/run_enrichment.py --llm-only
+python3 scripts/data_enrichment/run_enrichment.py --crawl-only
+python3 scripts/data_enrichment/run_enrichment.py --merge-only
+```
+
+这套工具链现在支持：
+
+- **增量写盘**：LLM 生成阶段每处理一条就更新对应 JSON 文件
+- **断点续跑**：再次运行时自动跳过已完成 `standard_code`
+- **分类补全**：生成新增指标时若缺少 category，会按扩展主题自动回填
+
+审核后覆盖正式数据：
+
+```bash
+cp data/enrichment/review_standard_dict.csv data/standard_dict.csv
+cp data/enrichment/review_reference_ranges.csv data/reference_range_standard.csv
+cp data/enrichment/review_risk_weights.csv data/risk_weight.csv
+```
+
 ## 注意事项
 
 - 医疗指标标准化不是纯大模型清洗，本项目采用规则优先、向量召回兜底、人工审核闭环。
