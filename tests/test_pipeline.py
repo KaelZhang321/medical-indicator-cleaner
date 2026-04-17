@@ -28,15 +28,6 @@ class FakeMatcher:
                     "score": 0.91,
                 }
             ][:top_k]
-        return [
-            {
-                "standard_code": "HY-BZ-001",
-                "standard_name": "总胆固醇",
-                "category": "血脂",
-                "matched_text": "总胆固醇",
-                "score": 0.91,
-            }
-        ][:top_k]
 
 
 def sample_json() -> dict:

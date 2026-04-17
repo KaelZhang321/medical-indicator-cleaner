@@ -34,6 +34,10 @@ def write_test_config(tmp_path: Path) -> Path:
     return config_path
 
 
+def read_config(config_path: Path) -> dict:
+    return yaml.safe_load(config_path.read_text(encoding="utf-8"))
+
+
 def test_review_feedback_adds_confirmed_alias(tmp_path: Path) -> None:
     config_path = write_test_config(tmp_path)
     review_path = tmp_path / "confirmed.csv"
@@ -47,10 +51,8 @@ def test_review_feedback_adds_confirmed_alias(tmp_path: Path) -> None:
     stats = apply_review_feedback(str(review_path), str(config_path))
 
     assert stats == {"confirmed": 1, "added": 1, "skipped": 0}
-    manager = DictManager(
-        yaml.safe_load(config_path.read_text(encoding="utf-8"))["data"]["standard_dict"],
-        yaml.safe_load(config_path.read_text(encoding="utf-8"))["data"]["alias_dict"],
-    )
+    config = read_config(config_path)
+    manager = DictManager(config["data"]["standard_dict"], config["data"]["alias_dict"])
     assert manager.lookup("胆固醇偏写")["standard_code"] == "HY-BZ-001"
     assert manager.lookup("拒绝项") is None
 
@@ -93,7 +95,7 @@ def test_review_feedback_alias_file_has_new_row(tmp_path: Path) -> None:
 
     apply_review_feedback(str(review_path), str(config_path))
 
-    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config = read_config(config_path)
     alias_df = pd.read_csv(config["data"]["alias_dict"])
     row = alias_df.loc[alias_df["alias"] == "胆固醇偏写"].iloc[0]
     assert row["standard_code"] == "HY-BZ-001"
