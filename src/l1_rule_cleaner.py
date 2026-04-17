@@ -31,6 +31,20 @@ FULLWIDTH_TRANSLATION = str.maketrans(
     }
 )
 
+UNIT_SUFFIXES = {
+    "mmol/L",
+    "mg/dl",
+    "mg/dL",
+    "g/L",
+    "U/L",
+    "IU/mL",
+    "ng/mL",
+    "pg/mL",
+    "kg",
+    "cm",
+    "%",
+}
+
 
 @dataclass
 class CleanResult:
@@ -69,6 +83,15 @@ class L1RuleCleaner:
     def _remove_trailing_punctuation(self, name: str) -> str:
         return str(name).rstrip(".。,，、-_/")
 
+    def _remove_unit_suffix(self, name: str) -> str:
+        match = re.match(r"^(.+?)\(([^()]+)\)$", str(name))
+        if not match:
+            return str(name)
+        bracket_content = match.group(2).strip()
+        if bracket_content in UNIT_SUFFIXES or "/" in bracket_content:
+            return match.group(1).rstrip()
+        return str(name)
+
     def _remove_internal_spaces(self, name: str) -> str:
         previous = str(name)
         while True:
@@ -83,6 +106,8 @@ class L1RuleCleaner:
         cleaned = self._remove_star_prefix(cleaned)
         cleaned = self._fullwidth_to_halfwidth(cleaned)
         cleaned, abbreviation = self._extract_abbreviation_from_brackets(cleaned)
+        if abbreviation is None:
+            cleaned = self._remove_unit_suffix(cleaned)
         cleaned = self._remove_trailing_punctuation(cleaned)
         cleaned = self._remove_internal_spaces(cleaned)
 

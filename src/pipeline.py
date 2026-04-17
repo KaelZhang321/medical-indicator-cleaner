@@ -37,14 +37,16 @@ class StandardizationPipeline:
         )
 
     def _init_matcher(self) -> L2EmbeddingMatcher:
+        index_path = Path(self.config["index"]["path"])
+        if not (index_path / "faiss.index").exists() or not (index_path / "metadata.pkl").exists():
+            return NullMatcher()
+
         matcher = L2EmbeddingMatcher(
             model_name=self.config["model"]["name"],
             device=self.config["model"].get("device", "cpu"),
             cache_dir=self.config["model"].get("cache_dir", "./models"),
         )
-        index_path = Path(self.config["index"]["path"])
-        if (index_path / "faiss.index").exists() and (index_path / "metadata.pkl").exists():
-            matcher.load_index(str(index_path))
+        matcher.load_index(str(index_path))
         return matcher
 
     def run(self, input_path: str, output_dir: str | None = None) -> dict[str, Any]:
@@ -126,7 +128,18 @@ class StandardizationPipeline:
         print("========= 标准化统计报告 =========")
         print(f"总指标数:        {stats['total']}")
         print(f"L1 命中数:       {stats['l1_hit_count']} ({stats['l1_hit_rate']:.1%})")
+        print(f"L2 命中数:       {stats.get('l2_hit_count', 0)} ({stats.get('l2_hit_rate', 0.0):.1%})")
         print(f"自动归一:        {stats['auto_count']} ({stats['auto_count'] / total:.1%})")
         print(f"待人工审核:      {stats['review_count']} ({stats['review_count'] / total:.1%})")
         print(f"需人工处理:      {stats['manual_count']} ({stats['manual_count'] / total:.1%})")
         print("=================================")
+
+
+class NullMatcher:
+    """No-op matcher used when the FAISS index has not been built yet."""
+
+    def is_index_loaded(self) -> bool:
+        return False
+
+    def search(self, _query: str, top_k: int = 5) -> list[dict[str, Any]]:
+        return []

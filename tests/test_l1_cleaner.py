@@ -119,6 +119,15 @@ def test_multiple_chinese_spaces() -> None:
     assert cleaner._remove_internal_spaces("血 红 蛋 白") == "血红蛋白"
 
 
+def test_clean_removes_unit_suffix_in_brackets() -> None:
+    cleaner = build_cleaner()
+    result = cleaner.clean("血糖(mmol/L)")
+
+    assert result.cleaned == "血糖"
+    assert result.abbreviation is None
+    assert result.standard_code == "HY-XT-001"
+
+
 def test_clean_full_pipeline_star_brackets() -> None:
     cleaner = build_cleaner()
     result = cleaner.clean("★甲胎蛋白(AFP)")

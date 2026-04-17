@@ -163,6 +163,18 @@ def test_pipeline_no_data_loss(tmp_path: Path) -> None:
     assert output_count == 3
 
 
+def test_pipeline_runs_without_l2_index(tmp_path: Path) -> None:
+    input_path = tmp_path / "sample.csv"
+    pd.DataFrame({"item_name": ["总胆固醇", "某某新检测项"]}).to_csv(input_path, index=False)
+
+    pipeline = StandardizationPipeline(config_path="config/settings.yaml", output_dir=str(tmp_path))
+    classified = pipeline.run(str(input_path))
+
+    assert classified["stats"]["total"] == 2
+    assert classified["stats"]["auto_count"] == 1
+    assert classified["stats"]["manual_count"] == 1
+
+
 def test_sample_dirty_has_50_rows() -> None:
     df = pd.read_csv("data/input/sample_dirty.csv")
 

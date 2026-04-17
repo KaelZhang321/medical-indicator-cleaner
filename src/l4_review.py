@@ -44,6 +44,12 @@ class L4Review:
 
         total = len(results)
         l1_hit_count = sum(1 for result in results if str(result.get("match_source", "")).endswith("_exact"))
+        l2_hit_count = sum(
+            1
+            for result in results
+            if str(result.get("match_source", "")) == "l2_embedding"
+            and float(result.get("confidence") or 0.0) >= self.review_threshold
+        )
         stats = {
             "total": total,
             "auto_count": len(auto_mapped),
@@ -51,6 +57,8 @@ class L4Review:
             "manual_count": len(manual_required),
             "l1_hit_count": l1_hit_count,
             "l1_hit_rate": l1_hit_count / total if total else 0.0,
+            "l2_hit_count": l2_hit_count,
+            "l2_hit_rate": l2_hit_count / total if total else 0.0,
         }
         return {
             "auto_mapped": auto_mapped,
@@ -104,6 +112,7 @@ class L4Review:
         review_count = int(stats.get("review_count", 0))
         manual_count = int(stats.get("manual_count", 0))
         l1_hit_count = int(stats.get("l1_hit_count", 0))
+        l2_hit_count = int(stats.get("l2_hit_count", 0))
         return "\n".join(
             [
                 "========= 标准化统计报告 =========",
@@ -112,6 +121,7 @@ class L4Review:
                 f"待人工审核:      {review_count} ({ratio(review_count):.1%})",
                 f"需人工处理:      {manual_count} ({ratio(manual_count):.1%})",
                 f"L1 命中数:       {l1_hit_count} ({float(stats.get('l1_hit_rate', 0.0)):.1%})",
+                f"L2 命中数:       {l2_hit_count} ({float(stats.get('l2_hit_rate', 0.0)):.1%})",
                 "=================================",
                 "",
             ]

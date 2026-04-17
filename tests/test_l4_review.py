@@ -73,6 +73,8 @@ def test_classify_stats_sum() -> None:
     assert stats["auto_count"] + stats["review_count"] + stats["manual_count"] == stats["total"]
     assert stats["l1_hit_count"] == 1
     assert stats["l1_hit_rate"] == 1 / 3
+    assert stats["l2_hit_count"] == 1
+    assert stats["l2_hit_rate"] == 1 / 3
 
 
 def test_export_csv_files_created(tmp_path: Path) -> None:
