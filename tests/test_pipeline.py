@@ -16,7 +16,7 @@ class FakeMatcher:
         return None
 
     def search(self, query: str, top_k: int = 5) -> list[dict]:
-        if query in {"血脂", "某某新检测项"}:
+        if query not in {"胆固醇偏写"}:
             return []
         if query == "胆固醇偏写":
             return [
@@ -161,3 +161,42 @@ def test_pipeline_no_data_loss(tmp_path: Path) -> None:
         + len(classified["manual_required"])
     )
     assert output_count == 3
+
+
+def test_sample_dirty_has_50_rows() -> None:
+    df = pd.read_csv("data/input/sample_dirty.csv")
+
+    assert len(df) == 50
+
+
+def test_pipeline_sample_dirty_end_to_end(tmp_path: Path) -> None:
+    classified = build_pipeline(tmp_path).run("data/input/sample_dirty.csv")
+    stats = classified["stats"]
+
+    assert stats["total"] == 50
+    assert stats["l1_hit_rate"] >= 0.6
+    assert stats["total"] == stats["auto_count"] + stats["review_count"] + stats["manual_count"]
+    assert (tmp_path / "auto_mapped.csv").exists()
+    assert (tmp_path / "need_review.csv").exists()
+    assert (tmp_path / "manual_required.csv").exists()
+    assert (tmp_path / "stats_report.txt").exists()
+
+
+def test_pipeline_sample_dirty_auto_mapped_accuracy(tmp_path: Path) -> None:
+    classified = build_pipeline(tmp_path).run("data/input/sample_dirty.csv")
+
+    auto_rows = classified["auto_mapped"][:20]
+    assert len(auto_rows) == 20
+    assert all(row["standard_code"] for row in auto_rows)
+    assert all(row["confidence"] >= 0.95 for row in auto_rows)
+
+
+def test_pipeline_sample_dirty_no_data_loss(tmp_path: Path) -> None:
+    classified = build_pipeline(tmp_path).run("data/input/sample_dirty.csv")
+
+    output_count = (
+        len(classified["auto_mapped"])
+        + len(classified["need_review"])
+        + len(classified["manual_required"])
+    )
+    assert output_count == 50

@@ -22,6 +22,7 @@ env/
 data/input/*.csv
 data/output/*.csv
 !data/input/.gitkeep
+!data/input/sample_dirty.csv
 !data/output/.gitkeep
 
 # FAISS index (generated, can be rebuilt)
