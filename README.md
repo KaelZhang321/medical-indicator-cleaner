@@ -139,6 +139,21 @@ python3 scripts/run_clean.py --input data/input/sample_dirty.csv --output data/o
 - AI 返回 `auto_map` 时才会自动归一；返回 `human_review` 时会进入最终人工处理
 - 若未配置 `ARK_API_KEY`，AI 复核层会自动跳过，不影响主流程执行
 
+## 增强能力
+
+项目已补充以下增强能力，可直接服务下游业务：
+
+- **P0 数据贯通**：最终输出保留 `study_id`、`exam_time`、`numeric_value`、`unit`、`reference_range_raw`、`is_abnormal` 等字段。
+- **参考范围结构化**：输出 `ref_min`、`ref_max`、`ref_text`、`ref_conditions`。
+- **异常判定补全**：输出 `abnormal_flag_source`、`is_abnormal`、`abnormal_direction`。
+- **单位标准化**：统一常见单位写法，并支持有限换算。
+- **大项名称标准化**：输出 `major_item_standard_code`、`major_item_standard_name`、`major_item_category`。
+- **批量指标聚合工具**：支持 HPV 和食物不耐受摘要聚合。
+- **纵向对比工具**：支持按时间生成指标对比表。
+- **四象限分析基础能力**：支持偏离度计算与象限分类。
+- **疗效预测特征准备**：支持从多次体检结果生成基础特征向量。
+- **错误容忍模式**：`strict=false` 时可跳过明显坏记录，避免整个 pipeline 中断。
+
 ## 注意事项
 
 - 医疗指标标准化不是纯大模型清洗，本项目采用规则优先、向量召回兜底、人工审核闭环。
@@ -157,7 +172,7 @@ python3 scripts/run_clean.py --input data/input/sample_dirty.csv --output data/o
 
 ```text
 python3 -m pytest
-109 passed
+141 passed
 
 python3 -m compileall src tests scripts
 通过

@@ -23,8 +23,12 @@ class StandardizationPipeline:
         matcher: Any | None = None,
         ai_reviewer: Any | None = None,
         output_dir: str | None = None,
+        strict: bool | None = None,
     ) -> None:
         self.config = load_config(config_path)
+        preprocessing_cfg = self.config.get("preprocessing", {})
+        self.strict = bool(preprocessing_cfg.get("strict", True)) if strict is None else strict
+        self.config.setdefault("preprocessing", {})["strict"] = self.strict
         self.output_dir = output_dir or self.config["data"]["output_dir"]
         self.dict_manager = DictManager(
             self.config["data"]["standard_dict"],
@@ -99,7 +103,9 @@ class StandardizationPipeline:
     def _standardize_dataframe(self, dataframe: pd.DataFrame) -> list[dict[str, Any]]:
         names = dataframe["item_name"].fillna("").astype(str).tolist()
         clean_results = self.cleaner.clean_batch(names)
-        base_results = [self._result_from_clean(clean_result, row.to_dict()) for clean_result, (_, row) in zip(clean_results, dataframe.iterrows())]
+        base_results: list[dict[str, Any]] = []
+        for clean_result, (_, row) in zip(clean_results, dataframe.iterrows()):
+            base_results.append(self._result_from_clean(clean_result, row.to_dict()))
 
         pending_indices = [index for index, row in enumerate(base_results) if row["confidence"] < 1.0]
         if not pending_indices or not self.matcher.is_index_loaded():

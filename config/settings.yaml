@@ -14,6 +14,7 @@ thresholds:
 data:
   standard_dict: ./data/standard_dict.csv
   alias_dict: ./data/alias_dict.csv
+  major_item_dict: ./data/major_item_dict.csv
   input_dir: ./data/input
   output_dir: ./data/output
 
@@ -30,6 +31,7 @@ departments:
 preprocessing:
   deduplicate: true
   parse_result_value: true
+  strict: true
 
 ai_review:
   enabled: false

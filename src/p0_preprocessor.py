@@ -7,6 +7,7 @@ from typing import Any
 import pandas as pd
 
 from src.abnormal_detector import derive_abnormal_status
+from src.major_item_normalizer import MajorItemNormalizer
 from src.result_parser import ResultParser
 from src.unit_normalizer import UnitNormalizer
 from src.utils import setup_logger
@@ -24,7 +25,10 @@ class P0Preprocessor:
         self.dept_whitelist = set(departments.get("whitelist", self.DEFAULT_WHITELIST))
         self.enable_deduplicate = bool(preprocessing.get("deduplicate", True))
         self.enable_result_parse = bool(preprocessing.get("parse_result_value", True))
+        self.strict = bool(preprocessing.get("strict", True))
         self.result_parser = ResultParser()
+        major_item_dict = config.get("data", {}).get("major_item_dict")
+        self.major_item_normalizer = MajorItemNormalizer(major_item_dict) if major_item_dict else None
         self.unit_normalizer = UnitNormalizer()
         self.logger = setup_logger(self.__class__.__name__)
 
@@ -35,6 +39,9 @@ class P0Preprocessor:
 
         for department in data.get("departments", []):
             for item in department.get("items", []):
+                if not self.strict and not isinstance(item.get("itemName"), str):
+                    self.logger.warning("Skipping malformed item_name record in lenient mode: %s", item.get("itemCode"))
+                    continue
                 rows.append(
                     {
                         "study_id": data.get("studyId"),
@@ -115,6 +122,29 @@ class P0Preprocessor:
         if not self.enable_result_parse:
             return df
 
+        if df.empty:
+            empty_columns = {
+                "numeric_value": pd.Series(dtype=object),
+                "text_value": pd.Series(dtype=object),
+                "unit_parsed": pd.Series(dtype=object),
+                "qualifier": pd.Series(dtype=object),
+                "judgment": pd.Series(dtype=object),
+                "ref_in_value": pd.Series(dtype=object),
+                "unit": pd.Series(dtype=object),
+                "ref_min": pd.Series(dtype=object),
+                "ref_max": pd.Series(dtype=object),
+                "ref_text": pd.Series(dtype=object),
+                "ref_conditions": pd.Series(dtype=object),
+                "is_simple_range": pd.Series(dtype=object),
+                "major_item_standard_code": pd.Series(dtype=object),
+                "major_item_standard_name": pd.Series(dtype=object),
+                "major_item_category": pd.Series(dtype=object),
+                "abnormal_flag_source": pd.Series(dtype=object),
+                "is_abnormal": pd.Series(dtype=object),
+                "abnormal_direction": pd.Series(dtype=object),
+            }
+            return df.assign(**empty_columns)
+
         parsed_records = [
             self.result_parser.parse(row.result_value_raw, row.unit_raw or "")
             for row in df.itertuples(index=False)
@@ -135,6 +165,18 @@ class P0Preprocessor:
         unit_missing = result["unit"] == ""
         result.loc[unit_missing, "unit"] = result.loc[unit_missing, "unit_parsed"]
         result["unit"] = result["unit"].apply(self.unit_normalizer.normalize)
+        if self.major_item_normalizer:
+            major_item_records = [
+                self.major_item_normalizer.lookup(row.major_item_name)
+                or {
+                    "major_item_standard_code": "",
+                    "major_item_standard_name": "",
+                    "major_item_category": "",
+                }
+                for row in result.itertuples(index=False)
+            ]
+            major_item_df = pd.DataFrame(major_item_records)
+            result = pd.concat([result.reset_index(drop=True), major_item_df.reset_index(drop=True)], axis=1)
         abnormal_records = [
             derive_abnormal_status(
                 row.numeric_value if pd.notna(row.numeric_value) else None,

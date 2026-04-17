@@ -35,6 +35,8 @@ class StandardRecord:
 
 
 class DictManager:
+    """Load standard/alias dictionaries and provide exact lookup plus alias write-back."""
+
     def __init__(self, standard_dict_path: str, alias_dict_path: str) -> None:
         self.standard_dict_path = Path(standard_dict_path)
         self.alias_dict_path = Path(alias_dict_path)
@@ -73,6 +75,7 @@ class DictManager:
         return record_map
 
     def _build_lookup_index(self) -> None:
+        """Build exact-name, abbreviation, and case-insensitive lookup indices."""
         self.name_to_code = {}
         self.abbr_to_code = {}
         self.name_upper_to_code = {}
@@ -115,6 +118,7 @@ class DictManager:
         return [part.strip() for part in str(aliases).split(";") if part.strip()]
 
     def lookup(self, cleaned_name: str, abbreviation: str | None = None) -> dict[str, str] | None:
+        """Look up a standardized indicator by cleaned name, abbreviation, or uppercase fallback."""
         normalized_name = str(cleaned_name).strip()
         if normalized_name in self.name_to_code:
             return self.name_to_code[normalized_name]
