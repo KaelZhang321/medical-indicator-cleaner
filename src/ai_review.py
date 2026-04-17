@@ -43,7 +43,7 @@ class ArkChatClient:
                 "messages": messages,
                 "temperature": 0,
             },
-            timeout=30,
+            timeout=120,
         )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
