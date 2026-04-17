@@ -1,0 +1,4 @@
+standard_code,gender,age_min,age_max,ref_min,ref_max,unit,notes
+HY-BZ-001,all,0,150,0,5.2,mmol/L,总胆固醇通用示例范围
+HY-XT-001,all,0,150,3.9,6.1,mmol/L,空腹血糖通用示例范围
+HY-SG-002,all,18,150,44,133,μmol/L,肌酐成人通用示例范围

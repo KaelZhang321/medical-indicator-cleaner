@@ -1,0 +1,4 @@
+standard_code,risk_weight,risk_category,notes
+HY-BZ-001,0.60,warning,总胆固醇持续升高需结合血脂谱综合判断
+HY-XT-001,0.85,critical,空腹血糖异常需重点关注代谢风险
+HY-ZL-001,0.90,critical,肿瘤标志物异常需结合临床进一步确认

@@ -154,6 +154,35 @@ python3 scripts/run_clean.py --input data/input/sample_dirty.csv --output data/o
 - **疗效预测特征准备**：支持从多次体检结果生成基础特征向量。
 - **错误容忍模式**：`strict=false` 时可跳过明显坏记录，避免整个 pipeline 中断。
 
+## 业务模板文件
+
+已提供以下业务方可直接填写的模板：
+
+| 文件 | 用途 | 当前状态 |
+|---|---|---|
+| `data/risk_weight.csv` | 四象限分析风险权重 | 含表头 + 3 行示例 |
+| `data/reference_range_standard.csv` | 标准参考范围（性别/年龄） | 含表头 + 3 行示例 |
+
+建议由业务侧/检验科继续填充，不要把示例值直接当作正式医学口径。
+
+## 下游脚本验证
+
+拿到真实“多人多次体检”的标准化 CSV 后，可直接运行：
+
+```bash
+# 纵向对比
+python3 scripts/build_comparison.py --inputs output_a.csv output_b.csv --output comparison.csv
+
+# 特征工程
+python3 scripts/build_ml_features.py --inputs output_a.csv output_b.csv --output ml_features.csv
+```
+
+建议至少准备：
+
+- 同一患者两次及以上体检结果
+- `standard_code`、`exam_time`、`numeric_value` 完整
+- 已按当前 pipeline 跑出的标准化输出
+
 ## 注意事项
 
 - 医疗指标标准化不是纯大模型清洗，本项目采用规则优先、向量召回兜底、人工审核闭环。
@@ -163,6 +192,7 @@ python3 scripts/run_clean.py --input data/input/sample_dirty.csv --output data/o
 - 当前环境下真实模型下载/索引构建可能受网络和 Python 运行时影响；核心 L2 逻辑已通过 deterministic fake encoder 测试覆盖。
 - 未构建索引时，Pipeline 不会强制加载 L2 模型，会稳定执行 L1-only 清洗。
 - AI 复核默认关闭；启用后会调用火山方舟模型 `doubao-seed-2-0-pro-260215`，并要求环境变量 `ARK_API_KEY` 存在。
+- `data/risk_weight.csv` 和 `data/reference_range_standard.csv` 当前只是模板和示例，正式业务口径必须由业务方/检验科确认后再用于生产分析。
 - `data/output/*.csv` 默认被忽略，不应提交实际清洗结果；`data/input/sample_dirty.csv` 是回归测试样本，已显式纳入版本管理。
 - 变更 L1 正则、字典格式、CSV 输出列名时，应先补充对应回归测试。
 

@@ -6,3 +6,11 @@ HPV核酸检测:
   method: non_zero_list
   summary_field: 食物不耐受结果
   detail_field: 不耐受食物
+白带常规:
+  method: leukorrhea_summary
+  summary_field: 白带常规结果
+  detail_field: 白带常规详情
+血型鉴定:
+  method: blood_type_combo
+  summary_field: 血型结果
+  detail_field: 血型详情
