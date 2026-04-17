@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual env
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Data (keep structure, ignore actual data files)
+data/input/*.csv
+data/output/*.csv
+!data/input/.gitkeep
+!data/output/.gitkeep
+
+# FAISS index (generated, can be rebuilt)
+data/faiss_index/*.index
+data/faiss_index/*.pkl
+!data/faiss_index/.gitkeep
+
+# Model cache
+models/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OMC
+.omc/
