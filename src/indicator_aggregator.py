@@ -8,7 +8,8 @@ class IndicatorAggregator:
     """Aggregate bulky indicator groups like HPV and food intolerance."""
 
     def __init__(self, rules_path: str = "data/aggregate_rules.yaml") -> None:
-        self.rules = yaml.safe_load(open(rules_path, "r", encoding="utf-8")) or {}
+        with open(rules_path, "r", encoding="utf-8") as file:
+            self.rules = yaml.safe_load(file) or {}
 
     def aggregate(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         rows = []

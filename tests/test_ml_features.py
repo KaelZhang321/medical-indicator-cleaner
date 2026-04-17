@@ -18,3 +18,16 @@ def test_build_features() -> None:
     assert features.loc[0, "HY-BZ-001_latest"] == 5.65
     assert round(features.loc[0, "HY-BZ-001_change_rate"], 4) == round((5.65 - 4.8) / 4.8, 4)
     assert features.loc[0, "abnormal_count"] == 1
+
+
+def test_build_features_skips_none_and_nan_change_rate() -> None:
+    first = pd.DataFrame(
+        [{"study_id": "s1", "exam_time": "2024-06-01", "standard_code": "HY-BZ-001", "numeric_value": float("nan"), "is_abnormal": False, "category": "血脂"}]
+    )
+    second = pd.DataFrame(
+        [{"study_id": "s2", "exam_time": "2024-12-12", "standard_code": "HY-BZ-001", "numeric_value": None, "is_abnormal": False, "category": "血脂"}]
+    )
+
+    features = build_features([first, second])
+
+    assert "HY-BZ-001_change_rate" not in features.columns

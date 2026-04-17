@@ -20,6 +20,16 @@ class UnitNormalizer:
     }
 
     GLUCOSE_CODE = "HY-XT-001"
+    CONVERSION_FACTORS = {
+        ("HY-XT-001", "mg/dL", "mmol/L"): 1 / 18.0,
+        ("HY-XT-001", "mmol/L", "mg/dL"): 18.0,
+        ("HY-BZ-001", "mg/dL", "mmol/L"): 1 / 38.67,
+        ("HY-BZ-001", "mmol/L", "mg/dL"): 38.67,
+        ("HY-BZ-002", "mg/dL", "mmol/L"): 1 / 88.57,
+        ("HY-BZ-002", "mmol/L", "mg/dL"): 88.57,
+        ("HY-SG-002", "mg/dL", "μmol/L"): 88.4,
+        ("HY-SG-002", "μmol/L", "mg/dL"): 1 / 88.4,
+    }
 
     def normalize(self, unit: str | None) -> str:
         normalized = str(unit or "").strip()
@@ -30,7 +40,7 @@ class UnitNormalizer:
         target = self.normalize(to_unit)
         if source == target:
             return True
-        return standard_code == self.GLUCOSE_CODE and {source, target} == {"mg/dL", "mmol/L"}
+        return (standard_code, source, target) in self.CONVERSION_FACTORS
 
     def convert(
         self,
@@ -43,8 +53,7 @@ class UnitNormalizer:
         target = self.normalize(to_unit)
         if source == target:
             return value
-        if standard_code == self.GLUCOSE_CODE and source == "mg/dL" and target == "mmol/L":
-            return value / 18.0
-        if standard_code == self.GLUCOSE_CODE and source == "mmol/L" and target == "mg/dL":
-            return value * 18.0
+        factor = self.CONVERSION_FACTORS.get((standard_code, source, target))
+        if factor is not None:
+            return value * factor
         raise ValueError(f"Unsupported unit conversion: {source} -> {target}")

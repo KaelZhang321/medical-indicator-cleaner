@@ -138,11 +138,13 @@ class StandardizationPipeline:
             "top_candidates": [],
         }
         if clean_result.confidence >= 1.0:
-            standard_row = self.dict_manager.standard_dict.loc[
+            matches = self.dict_manager.standard_dict.loc[
                 self.dict_manager.standard_dict["code"] == clean_result.standard_code
-            ].iloc[0]
-            base["standard_unit"] = standard_row["common_unit"]
-            base["result_type"] = standard_row["result_type"]
+            ]
+            if not matches.empty:
+                standard_row = matches.iloc[0]
+                base["standard_unit"] = standard_row["common_unit"]
+                base["result_type"] = standard_row["result_type"]
             return base
         return base
 
@@ -163,9 +165,11 @@ class StandardizationPipeline:
         )
         standard_row = self.dict_manager.standard_dict.loc[
             self.dict_manager.standard_dict["code"] == top["standard_code"]
-        ].iloc[0]
-        base["standard_unit"] = standard_row["common_unit"]
-        base["result_type"] = standard_row["result_type"]
+        ]
+        if not standard_row.empty:
+            matched_row = standard_row.iloc[0]
+            base["standard_unit"] = matched_row["common_unit"]
+            base["result_type"] = matched_row["result_type"]
 
     def _print_report(self, classified: dict[str, Any]) -> None:
         stats = classified["stats"]

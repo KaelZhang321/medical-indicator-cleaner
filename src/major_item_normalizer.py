@@ -15,6 +15,7 @@ class MajorItemNormalizer:
                 normalized = alias.strip()
                 if normalized:
                     self.lookup_index[normalized] = self._payload(row)
+        self.substring_index = sorted(self.lookup_index.items(), key=lambda item: -len(item[0]))
 
     def _payload(self, row) -> dict[str, str]:
         return {
@@ -29,9 +30,7 @@ class MajorItemNormalizer:
             normalized = normalized[2:]
         if normalized in self.lookup_index:
             return self.lookup_index[normalized]
-        for alias, payload in self.lookup_index.items():
+        for alias, payload in self.substring_index:
             if alias and alias in normalized:
                 return payload
-        if "HPV" in normalized:
-            return self.lookup_index.get("HPV核酸检测")
         return None

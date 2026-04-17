@@ -238,6 +238,27 @@ def test_pipeline_runs_without_l2_index(tmp_path: Path) -> None:
     assert classified["stats"]["manual_count"] == 1
 
 
+def test_pipeline_missing_standard_row_does_not_crash(tmp_path: Path) -> None:
+    class BrokenMatcher(FakeMatcher):
+        def search_batch(self, queries: list[str], top_k: int = 5) -> list[list[dict]]:
+            return [[{
+                "standard_code": "BROKEN-CODE",
+                "standard_name": "坏标准项",
+                "category": "未知",
+                "matched_text": query,
+                "score": 0.92,
+            }] for query in queries]
+
+    input_path = tmp_path / "sample.csv"
+    pd.DataFrame({"item_name": ["胆固醇偏写"]}).to_csv(input_path, index=False)
+
+    classified = build_pipeline(tmp_path, matcher=BrokenMatcher()).run(str(input_path))
+
+    assert classified["stats"]["total"] == 1
+    assert classified["need_review"][0]["standard_code"] == "BROKEN-CODE"
+    assert classified["need_review"][0]["standard_unit"] == ""
+
+
 def test_sample_dirty_has_50_rows() -> None:
     df = pd.read_csv("data/input/sample_dirty.csv")
 
