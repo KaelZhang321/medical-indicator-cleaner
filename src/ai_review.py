@@ -28,6 +28,8 @@ class ArkChatClient:
         if not self.is_configured():
             raise ValueError("Ark client is not configured")
 
+        import re
+
         import requests
 
         response = requests.post(
@@ -39,13 +41,16 @@ class ArkChatClient:
             json={
                 "model": self.model,
                 "messages": messages,
-                "response_format": {"type": "json_object"},
                 "temperature": 0,
             },
             timeout=30,
         )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
+        # Extract JSON from response — model may wrap it in markdown code fences
+        json_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", content, re.DOTALL)
+        if json_match:
+            content = json_match.group(1).strip()
         return json.loads(content)
 
 
