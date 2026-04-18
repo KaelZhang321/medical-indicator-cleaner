@@ -43,8 +43,8 @@ def test_review_feedback_adds_confirmed_alias(tmp_path: Path) -> None:
     review_path = tmp_path / "confirmed.csv"
     pd.DataFrame(
         [
-            {"original_name": "胆固醇偏写", "standard_code": "HY-BZ-001", "confirmed": 1},
-            {"original_name": "拒绝项", "standard_code": "HY-BZ-001", "confirmed": 0},
+            {"original_name": "胆固醇偏写", "standard_code": "040201", "confirmed": 1},
+            {"original_name": "拒绝项", "standard_code": "040201", "confirmed": 0},
         ]
     ).to_csv(review_path, index=False)
 
@@ -53,7 +53,7 @@ def test_review_feedback_adds_confirmed_alias(tmp_path: Path) -> None:
     assert stats == {"confirmed": 1, "added": 1, "skipped": 0}
     config = read_config(config_path)
     manager = DictManager(config["data"]["standard_dict"], config["data"]["alias_dict"])
-    assert manager.lookup("胆固醇偏写")["standard_code"] == "HY-BZ-001"
+    assert manager.lookup("胆固醇偏写")["standard_code"] == "040201"
     assert manager.lookup("拒绝项") is None
 
 
@@ -62,8 +62,8 @@ def test_review_feedback_skips_duplicates(tmp_path: Path) -> None:
     review_path = tmp_path / "confirmed.csv"
     pd.DataFrame(
         [
-            {"original_name": "胆固醇偏写", "standard_code": "HY-BZ-001", "confirmed": 1},
-            {"original_name": "胆固醇偏写", "standard_code": "HY-BZ-001", "confirmed": 1},
+            {"original_name": "胆固醇偏写", "standard_code": "040201", "confirmed": 1},
+            {"original_name": "胆固醇偏写", "standard_code": "040201", "confirmed": 1},
         ]
     ).to_csv(review_path, index=False)
 
@@ -90,13 +90,13 @@ def test_review_feedback_alias_file_has_new_row(tmp_path: Path) -> None:
     config_path = write_test_config(tmp_path)
     review_path = tmp_path / "confirmed.csv"
     pd.DataFrame(
-        [{"original_name": "胆固醇偏写", "standard_code": "HY-BZ-001", "confirmed": 1}]
+        [{"original_name": "胆固醇偏写", "standard_code": "040201", "confirmed": 1}]
     ).to_csv(review_path, index=False)
 
     apply_review_feedback(str(review_path), str(config_path))
 
     config = read_config(config_path)
-    alias_df = pd.read_csv(config["data"]["alias_dict"])
+    alias_df = pd.read_csv(config["data"]["alias_dict"], dtype=str)
     row = alias_df.loc[alias_df["alias"] == "胆固醇偏写"].iloc[0]
-    assert row["standard_code"] == "HY-BZ-001"
+    assert str(row["standard_code"]) == "040201"
     assert row["source"] == "manual_review"

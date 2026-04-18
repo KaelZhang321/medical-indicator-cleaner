@@ -121,11 +121,11 @@ def test_multiple_chinese_spaces() -> None:
 
 def test_clean_removes_unit_suffix_in_brackets() -> None:
     cleaner = build_cleaner()
-    result = cleaner.clean("血糖(mmol/L)")
+    result = cleaner.clean("总胆固醇(mmol/L)")
 
-    assert result.cleaned == "血糖"
+    assert result.cleaned == "总胆固醇"
     assert result.abbreviation is None
-    assert result.standard_code == "HY-XT-001"
+    assert result.standard_code == "040201"
 
 
 def test_clean_full_pipeline_star_brackets() -> None:
@@ -135,7 +135,7 @@ def test_clean_full_pipeline_star_brackets() -> None:
     assert result.cleaned == "甲胎蛋白"
     assert result.abbreviation == "AFP"
     assert result.standard_name == "甲胎蛋白"
-    assert result.standard_code == "HY-ZL-001"
+    assert result.standard_code == "040702"
     assert result.match_source == "alias_exact"
     assert result.confidence == 1.0
 
@@ -147,7 +147,7 @@ def test_clean_full_pipeline_mixed_brackets() -> None:
     assert result.cleaned == "类风湿因子"
     assert result.abbreviation == "RF"
     assert result.standard_name == "类风湿因子"
-    assert result.standard_code == "HY-MY-005"
+    assert result.standard_code == "050801"
 
 
 def test_clean_lookup_hit() -> None:
@@ -155,7 +155,7 @@ def test_clean_lookup_hit() -> None:
     result = cleaner.clean("总胆固醇(TC)")
 
     assert result.standard_name == "总胆固醇"
-    assert result.standard_code == "HY-BZ-001"
+    assert result.standard_code == "040201"
     assert result.match_source == "alias_exact"
 
 

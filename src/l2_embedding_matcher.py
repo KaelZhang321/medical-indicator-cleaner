@@ -40,12 +40,16 @@ class L2EmbeddingMatcher:
             cls = SentenceTransformer
         return cls(self.model_name, device=self.device, cache_folder=self.cache_dir)
 
-    def _encode(self, texts: list[str]) -> np.ndarray:
-        embeddings = self.model.encode(texts, normalize_embeddings=False)
-        vectors = np.asarray(embeddings, dtype=np.float32)
-        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
-        norms[norms == 0] = 1.0
-        return vectors / norms
+    def _encode(self, texts: list[str], batch_size: int = 256) -> np.ndarray:
+        all_vectors: list[np.ndarray] = []
+        for start in range(0, len(texts), batch_size):
+            batch = texts[start : start + batch_size]
+            embeddings = self.model.encode(batch, normalize_embeddings=False)
+            vectors = np.asarray(embeddings, dtype=np.float32)
+            norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+            norms[norms == 0] = 1.0
+            all_vectors.append(vectors / norms)
+        return np.vstack(all_vectors) if all_vectors else np.empty((0, 768), dtype=np.float32)
 
     def build_index(self, dict_manager: DictManager) -> None:
         texts: list[str] = []

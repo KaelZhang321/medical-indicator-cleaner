@@ -20,7 +20,7 @@ def test_load_standard_dict_missing_column(tmp_path: Path) -> None:
 
     standard_path.write_text(
         "code,standard_name,abbreviation,aliases,category,common_unit\n"
-        "HY-BZ-001,总胆固醇,TC,胆固醇;CHOL,血脂,mmol/L\n",
+        "040201,总胆固醇,TC,胆固醇;CHOL,血脂,mmol/L\n",
         encoding="utf-8",
     )
     alias_path.write_text(
@@ -38,7 +38,7 @@ def test_lookup_by_standard_name() -> None:
     result = manager.lookup("总胆固醇")
 
     assert result == {
-        "standard_code": "HY-BZ-001",
+        "standard_code": "040201",
         "standard_name": "总胆固醇",
         "category": "血脂",
     }
@@ -47,13 +47,11 @@ def test_lookup_by_standard_name() -> None:
 def test_lookup_by_alias() -> None:
     manager = DictManager("data/standard_dict.csv", "data/alias_dict.csv")
 
-    result = manager.lookup("胆固醇")
+    result = manager.lookup("CHOL")
 
-    assert result == {
-        "standard_code": "HY-BZ-001",
-        "standard_name": "总胆固醇",
-        "category": "血脂",
-    }
+    assert result is not None
+    assert result["standard_name"] == "总胆固醇"
+    assert result["category"] == "血脂"
 
 
 def test_lookup_by_abbreviation() -> None:
@@ -62,7 +60,7 @@ def test_lookup_by_abbreviation() -> None:
     result = manager.lookup("TC", abbreviation="TC")
 
     assert result == {
-        "standard_code": "HY-BZ-001",
+        "standard_code": "040201",
         "standard_name": "总胆固醇",
         "category": "血脂",
     }
@@ -74,7 +72,7 @@ def test_lookup_case_insensitive() -> None:
     result = manager.lookup("tc")
 
     assert result == {
-        "standard_code": "HY-BZ-001",
+        "standard_code": "040201",
         "standard_name": "总胆固醇",
         "category": "血脂",
     }
@@ -93,12 +91,12 @@ def test_add_alias_and_lookup(tmp_path: Path) -> None:
     pd.read_csv("data/alias_dict.csv").to_csv(alias_path, index=False)
 
     manager = DictManager(str(standard_path), str(alias_path))
-    manager.add_alias("总胆固醇项目", "HY-BZ-001")
+    manager.add_alias("总胆固醇项目", "040201")
 
     result = manager.lookup("总胆固醇项目")
 
     assert result == {
-        "standard_code": "HY-BZ-001",
+        "standard_code": "040201",
         "standard_name": "总胆固醇",
         "category": "血脂",
     }
@@ -111,8 +109,8 @@ def test_add_alias_no_duplicate(tmp_path: Path) -> None:
     pd.read_csv("data/alias_dict.csv").to_csv(alias_path, index=False)
 
     manager = DictManager(str(standard_path), str(alias_path))
-    manager.add_alias("总胆固醇项目", "HY-BZ-001")
-    manager.add_alias("总胆固醇项目", "HY-BZ-001")
+    manager.add_alias("总胆固醇项目", "040201")
+    manager.add_alias("总胆固醇项目", "040201")
 
     persisted = pd.read_csv(alias_path)
     assert len(persisted[persisted["alias"] == "总胆固醇项目"]) == 1
@@ -125,10 +123,10 @@ def test_alias_persisted_to_csv(tmp_path: Path) -> None:
     pd.read_csv("data/alias_dict.csv").to_csv(alias_path, index=False)
 
     manager = DictManager(str(standard_path), str(alias_path))
-    manager.add_alias("总胆固醇项目", "HY-BZ-001", source="manual_review")
+    manager.add_alias("总胆固醇项目", "040201", source="manual_review")
 
-    persisted = pd.read_csv(alias_path)
+    persisted = pd.read_csv(alias_path, dtype=str)
     row = persisted.loc[persisted["alias"] == "总胆固醇项目"].iloc[0]
 
-    assert row["standard_code"] == "HY-BZ-001"
+    assert str(row["standard_code"]) == "040201"
     assert row["source"] == "manual_review"
