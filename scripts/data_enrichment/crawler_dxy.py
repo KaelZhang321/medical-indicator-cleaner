@@ -69,12 +69,21 @@ class DxyCrawler:
         if not html:
             return None
         soup = BeautifulSoup(html, "lxml")
-        # Look for lab-test result links
-        for link in soup.select("a[href*='/lab-test/']"):
+        candidates = []
+        for link in soup.select("a[href]"):
             href = link.get("href", "")
-            if href.startswith("/"):
-                href = self.BASE_URL + href
-            return href
+            if not href:
+                continue
+            if "/lab-test/" in href or re.search(r"/disease/\d+/detail", href):
+                if href.startswith("/"):
+                    href = self.BASE_URL + href
+                candidates.append(href)
+        if candidates:
+            return candidates[0]
+        logger.warning(
+            "DXY search returned no usable lab/disease detail links for %s; likely search page structure changed or results require JS rendering",
+            name,
+        )
         return None
 
     def parse_detail_page(self, html: str) -> dict[str, Any]:
@@ -145,7 +154,7 @@ class DxyCrawler:
 
         detail_url = self.search_indicator(name)
         if not detail_url:
-            logger.info("No DXY page found for: %s", name)
+            logger.info("No DXY detail page found for: %s", name)
             return None
 
         html = self._safe_get(detail_url)
