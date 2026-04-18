@@ -34,7 +34,7 @@ preprocessing:
   strict: true
 
 ai_review:
-  enabled: false
+  enabled: true
   model: doubao-seed-2-0-pro-260215
 
 database:
