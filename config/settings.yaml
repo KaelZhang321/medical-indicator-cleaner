@@ -36,3 +36,17 @@ preprocessing:
 ai_review:
   enabled: false
   model: doubao-seed-2-0-pro-260215
+
+database:
+  host: rm-2ze7k76808sos442l.mysql.rds.aliyuncs.com
+  user: klb_0418
+  password: ${DB_PASSWORD}
+  database: dc_ods
+  charset: utf8mb4
+  dept_tables:
+    HY: {table: ods_tj_hyb, result_col: ItemResult, unit_col: ItemUnit, ref_col: DefValue, flag_col: Flag}
+    YB: {table: ods_tj_ybb, result_col: CValue}
+    ER: {table: ods_tj_erb, result_col: CValue}
+    NK: {table: ods_tj_nkb, result_col: CValue}
+    WK: {table: ods_tj_wkb, result_col: CValue}
+    FK: {table: ods_tj_fkb, result_col: CValue}
