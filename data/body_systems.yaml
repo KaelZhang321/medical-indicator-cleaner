@@ -1,0 +1,43 @@
+# 人体系统分组配置 — 用于疗效预测的系统级评估
+systems:
+  - name: 心血管系统
+    key: cardiovascular
+    indicators: ["040201", "040202", "040203", "040204", "040205", "040206", "040409"]
+    derived: ["NLR", "LDL_HDL_RATIO"]
+    weight: 1.0
+
+  - name: 代谢系统
+    key: metabolic
+    indicators: ["040103", "040104", "040105"]
+    derived: []
+    weight: 1.0
+
+  - name: 肝脏系统
+    key: liver
+    indicators: ["040501", "040502", "040503", "040504", "040505", "040506", "040507"]
+    derived: ["AST_ALT_RATIO", "AG_RATIO"]
+    weight: 0.9
+
+  - name: 肾脏系统
+    key: kidney
+    indicators: ["040401", "040402", "040403", "040404"]
+    derived: []
+    weight: 0.9
+
+  - name: 血液系统
+    key: blood
+    indicators: ["030101", "030102", "030103", "030104", "030105", "030112"]
+    derived: ["NLR", "PLR"]
+    weight: 0.8
+
+  - name: 甲状腺系统
+    key: thyroid
+    indicators: ["050701", "050702", "050703", "050301", "050302"]
+    derived: []
+    weight: 0.7
+
+  - name: 免疫系统
+    key: immune
+    indicators: ["050801", "050802", "050803", "040411"]
+    derived: []
+    weight: 0.7
