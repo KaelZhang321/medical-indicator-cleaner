@@ -1,5 +1,399 @@
+:root {
+  color-scheme: light;
+  --bg-canvas: #f3ede3;
+  --bg-shell: rgba(255, 253, 249, 0.88);
+  --bg-panel: #fffdf9;
+  --bg-panel-strong: #f8f1e6;
+  --line-soft: rgba(62, 52, 40, 0.08);
+  --line-strong: rgba(62, 52, 40, 0.16);
+  --text-main: #24313a;
+  --text-muted: #66707a;
+  --accent-deep: #2d5b63;
+  --accent-warm: #c88a33;
+  --accent-alert: #b84f3d;
+  --accent-calm: #4b7d67;
+  --shadow-card: 0 20px 50px rgba(93, 72, 40, 0.12);
+  --shadow-soft: 0 10px 30px rgba(93, 72, 40, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at top left, rgba(200, 138, 51, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(45, 91, 99, 0.14), transparent 24%),
+    linear-gradient(180deg, #f7f1e8 0%, var(--bg-canvas) 100%);
+  font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background-image:
+    linear-gradient(rgba(83, 67, 47, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(83, 67, 47, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: transparent !important;
+}
+
+.app-sider.ant-layout-sider {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(24, 36, 39, 0.98) 0%, rgba(37, 56, 61, 0.96) 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 18px 0 60px rgba(22, 28, 31, 0.22);
+}
+
+.app-sider.ant-layout-sider::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top, rgba(200, 138, 51, 0.18), transparent 32%),
+    linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.04) 100%);
+}
+
+.app-brand {
+  position: relative;
+  z-index: 1;
+  margin: 20px 18px 14px;
+  padding: 22px 18px;
+  border-radius: 22px;
+  color: #f8efe2;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.app-brand-kicker {
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(248, 239, 226, 0.72);
+}
+
+.app-brand-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.app-brand-subtitle {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(248, 239, 226, 0.78);
+}
+
+.app-menu {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+  border-inline-end: none !important;
+  padding: 6px 12px 24px;
+}
+
+.app-menu .ant-menu-item {
+  height: 48px;
+  line-height: 48px;
+  margin-block: 8px !important;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.app-menu .ant-menu-item-selected {
+  background: linear-gradient(135deg, rgba(200, 138, 51, 0.92), rgba(166, 99, 20, 0.92)) !important;
+  box-shadow: 0 14px 30px rgba(200, 138, 51, 0.22);
+}
+
+.app-main {
+  background: transparent !important;
+}
+
+.app-header.ant-layout-header {
+  height: auto;
+  padding: 28px 28px 0;
+  line-height: normal;
+  background: transparent !important;
+}
+
+.app-header-content {
+  padding: 22px 26px;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 24px;
+  background: rgba(255, 252, 246, 0.62);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-soft);
+}
+
+.app-header-eyebrow {
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+}
+
+.app-header-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.app-header-subtitle {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.app-content.ant-layout-content {
+  margin: 0;
+  padding: 22px 28px 28px;
+}
+
+.content-surface {
+  min-height: calc(100vh - 170px);
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  border-radius: 30px;
+  background: var(--bg-shell);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-card);
+}
+
+.page-shell {
+  animation: page-enter 320ms ease;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.page-kicker {
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-warm);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.page-subtitle {
+  margin-top: 10px;
+  max-width: 720px;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.page-status-chip {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(45, 91, 99, 0.14);
+  background: rgba(45, 91, 99, 0.08);
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.query-panel.ant-card,
+.section-card.ant-card,
+.summary-card.ant-card,
+.hero-card.ant-card {
+  border: 1px solid var(--line-soft);
+  border-radius: 24px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.hero-card.ant-card {
+  background:
+    linear-gradient(135deg, rgba(255, 247, 233, 0.96), rgba(252, 250, 244, 0.98));
+}
+
+.section-card .ant-card-head,
+.summary-card .ant-card-head,
+.hero-card .ant-card-head {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.section-card .ant-card-head-title,
+.summary-card .ant-card-head-title,
+.hero-card .ant-card-head-title {
+  font-weight: 700;
+}
+
+.query-panel .ant-card-body,
+.section-card .ant-card-body,
+.summary-card .ant-card-body,
+.hero-card .ant-card-body {
+  padding: 22px 24px;
+}
+
+.query-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.query-toolbar .ant-input-affix-wrapper,
+.query-toolbar .ant-input,
+.query-toolbar .ant-select-selector {
+  border-radius: 14px !important;
+}
+
+.stat-grid {
+  margin-bottom: 20px;
+}
+
+.stat-card.ant-card .ant-card-body {
+  padding: 18px 20px;
+}
+
+.stat-label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.table-card .ant-table-wrapper,
+.section-card .ant-table-wrapper {
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.ant-table {
+  background: transparent !important;
+}
+
+.ant-table-thead > tr > th {
+  background: var(--bg-panel-strong) !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  color: var(--text-main) !important;
+  font-weight: 700 !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid rgba(62, 52, 40, 0.06) !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: rgba(45, 91, 99, 0.04) !important;
+}
+
+.row-abnormal > td {
+  background: rgba(184, 79, 61, 0.07) !important;
+}
+
+.row-abnormal:hover > td {
+  background: rgba(184, 79, 61, 0.1) !important;
+}
+
+.ant-alert {
+  border-radius: 18px !important;
+}
+
+.ant-tag {
+  border-radius: 999px;
+  padding-inline: 10px;
+  font-weight: 600;
+}
+
+.ant-btn {
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.ant-btn-primary {
+  box-shadow: 0 14px 28px rgba(45, 91, 99, 0.18);
+}
+
+.ant-statistic {
+  line-height: 1;
+}
+
+.ant-statistic-content {
+  font-weight: 700;
+}
+
+.ant-descriptions {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.ant-collapse {
+  border-radius: 18px !important;
+  overflow: hidden;
+}
+
+.ant-list-item {
+  border-block-end-color: var(--line-soft) !important;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1200px) {
+  .page-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 992px) {
+  .app-header.ant-layout-header,
+  .app-content.ant-layout-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .content-surface {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .page-title {
+    font-size: 26px;
+  }
 }

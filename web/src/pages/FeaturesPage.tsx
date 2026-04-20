@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Input, Button, Card, Statistic, Row, Col, Table, Tag, Space, Alert, Progress, message } from 'antd';
+import { Input, Button, Card, Statistic, Row, Col, Table, Tag, Alert, Progress, message } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { Radar } from '@antv/g2plot';
 import { fetchFeatures } from '../api';
@@ -113,17 +113,28 @@ export default function FeaturesPage() {
   const changingIndicators = data?.indicators.filter(i => i.risk_level !== '正常' && i.risk_level !== '') || [];
 
   return (
-    <div>
-      <Space style={{ marginBottom: 24 }}>
-        <Input
-          placeholder="输入身份证号"
-          value={sfzh}
-          onChange={e => setSfzh(e.target.value)}
-          onPressEnter={handleSearch}
-          style={{ width: 300 }}
-        />
-        <Button type="primary" onClick={handleSearch} loading={loading}>健康评估</Button>
-      </Space>
+    <div className="page-shell">
+      <div className="page-head">
+        <div>
+          <div className="page-kicker">Trajectory Forecast</div>
+          <h1 className="page-title">疗效预测</h1>
+          <div className="page-subtitle">综合最近几次体检数据，提炼健康趋势、恶化风险与改善信号，支持后续随访判断。</div>
+        </div>
+        <div className="page-status-chip">趋势评分 + 变化率评估</div>
+      </div>
+
+      <Card className="query-panel" style={{ marginBottom: 24 }}>
+        <div className="query-toolbar">
+          <Input
+            placeholder="输入身份证号"
+            value={sfzh}
+            onChange={e => setSfzh(e.target.value)}
+            onPressEnter={handleSearch}
+            style={{ width: 300 }}
+          />
+          <Button type="primary" onClick={handleSearch} loading={loading}>健康评估</Button>
+        </div>
+      </Card>
 
       {data && s && (
         <>
@@ -163,13 +174,13 @@ export default function FeaturesPage() {
 
           {/* 变化率雷达图 */}
           {data.indicators.some(i => i.change_rate != null) && (
-            <Card title="指标变化率雷达图 (Top 10 变化最大)" style={{ marginBottom: 24 }}>
+            <Card className="section-card" title="指标变化率雷达图 (Top 10 变化最大)" style={{ marginBottom: 24 }}>
               <div ref={chartRef} style={{ height: 350 }} />
             </Card>
           )}
 
           {/* 需关注指标 */}
-          <Card title={`需关注指标 (${changingIndicators.length} 项)`} style={{ marginBottom: 24 }}>
+          <Card className="section-card table-card" title={`需关注指标 (${changingIndicators.length} 项)`} style={{ marginBottom: 24 }}>
             <Table
               dataSource={changingIndicators}
               rowKey="code"
@@ -201,7 +212,7 @@ export default function FeaturesPage() {
           </Card>
 
           {/* 全部指标明细 */}
-          <Card title={`全部数值指标 (${data.indicators.length} 项)`}>
+          <Card className="section-card table-card" title={`全部数值指标 (${data.indicators.length} 项)`}>
             <Table
               dataSource={data.indicators}
               rowKey="code"
@@ -241,10 +252,6 @@ export default function FeaturesPage() {
             />
           </Card>
 
-          <style>{`
-            .row-abnormal { background: #fff2f0 !important; }
-            .row-abnormal:hover > td { background: #ffece8 !important; }
-          `}</style>
         </>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Input, Button, Table, Tag, Card, Descriptions, Statistic, Row, Col, Space, Switch, message } from 'antd';
+import { Input, Button, Table, Tag, Card, Descriptions, Statistic, Row, Col, Switch, message } from 'antd';
 import { SearchOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { fetchExam, type Indicator, type ExamResponse } from '../api';
@@ -85,32 +85,43 @@ export default function ExamPage() {
   ];
 
   return (
-    <div>
-      <Space style={{ marginBottom: 24 }}>
-        <Input
-          placeholder="输入体检编号 (StudyID)"
-          value={studyId}
-          onChange={e => setStudyId(e.target.value)}
-          onPressEnter={handleSearch}
-          style={{ width: 300 }}
-          prefix={<SearchOutlined />}
-        />
-        <Button type="primary" onClick={handleSearch} loading={loading}>
-          查询
-        </Button>
-        {data && (
-          <Switch
-            checkedChildren="仅看异常"
-            unCheckedChildren="全部指标"
-            checked={onlyAbnormal}
-            onChange={setOnlyAbnormal}
+    <div className="page-shell">
+      <div className="page-head">
+        <div>
+          <div className="page-kicker">Single Visit Review</div>
+          <h1 className="page-title">体检查询</h1>
+          <div className="page-subtitle">查看单次体检的标准化结果、异常状态和分类分布，适合做单次报告核对与异常项复盘。</div>
+        </div>
+        <div className="page-status-chip">StudyID 驱动的单次体检工作区</div>
+      </div>
+
+      <Card className="query-panel" style={{ marginBottom: 24 }}>
+        <div className="query-toolbar">
+          <Input
+            placeholder="输入体检编号 (StudyID)"
+            value={studyId}
+            onChange={e => setStudyId(e.target.value)}
+            onPressEnter={handleSearch}
+            style={{ width: 300 }}
+            prefix={<SearchOutlined />}
           />
-        )}
-      </Space>
+          <Button type="primary" onClick={handleSearch} loading={loading}>
+            查询
+          </Button>
+          {data && (
+            <Switch
+              checkedChildren="仅看异常"
+              unCheckedChildren="全部指标"
+              checked={onlyAbnormal}
+              onChange={setOnlyAbnormal}
+            />
+          )}
+        </div>
+      </Card>
 
       {data && (
         <>
-          <Card style={{ marginBottom: 24 }}>
+          <Card className="hero-card" style={{ marginBottom: 24 }}>
             <Descriptions title="基本信息" column={4}>
               <Descriptions.Item label="体检编号">{data.study_id}</Descriptions.Item>
               <Descriptions.Item label="姓名">{data.patient_name}</Descriptions.Item>
@@ -131,21 +142,18 @@ export default function ExamPage() {
             </Row>
           </Card>
 
-          <Table
-            columns={columns}
-            dataSource={onlyAbnormal ? data.indicators.filter(i => i.is_abnormal) : data.indicators}
-            rowKey={(r, i) => `${r.standard_code}-${i}`}
-            size="small"
-            pagination={{ pageSize: 20, showTotal: t => `共 ${t} 项` }}
-            rowClassName={record => record.is_abnormal ? 'row-abnormal' : ''}
-          />
+          <Card className="section-card table-card">
+            <Table
+              columns={columns}
+              dataSource={onlyAbnormal ? data.indicators.filter(i => i.is_abnormal) : data.indicators}
+              rowKey={(r, i) => `${r.standard_code}-${i}`}
+              size="small"
+              pagination={{ pageSize: 20, showTotal: t => `共 ${t} 项` }}
+              rowClassName={record => record.is_abnormal ? 'row-abnormal' : ''}
+            />
+          </Card>
         </>
       )}
-
-      <style>{`
-        .row-abnormal { background: #fff2f0 !important; }
-        .row-abnormal:hover > td { background: #ffece8 !important; }
-      `}</style>
     </div>
   );
 }

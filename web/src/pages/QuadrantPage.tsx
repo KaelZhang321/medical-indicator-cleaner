@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Input, Button, Card, Statistic, Row, Col, Table, Tag, Space, Alert, Progress, Collapse, message } from 'antd';
+import { Input, Button, Card, Statistic, Row, Col, Table, Tag, Alert, Progress, Collapse, message } from 'antd';
 import { WarningOutlined, CheckCircleOutlined, MedicineBoxOutlined } from '@ant-design/icons';
 import { Scatter } from '@antv/g2plot';
 import { fetchQuadrant, type QuadrantResponse, type QuadrantItem } from '../api';
@@ -109,17 +109,28 @@ export default function QuadrantPage() {
     : [];
 
   return (
-    <div>
-      <Space style={{ marginBottom: 24 }}>
-        <Input
-          placeholder="输入体检编号 (StudyID)"
-          value={studyId}
-          onChange={e => setStudyId(e.target.value)}
-          onPressEnter={handleSearch}
-          style={{ width: 300 }}
-        />
-        <Button type="primary" onClick={handleSearch} loading={loading}>分析</Button>
-      </Space>
+    <div className="page-shell">
+      <div className="page-head">
+        <div>
+          <div className="page-kicker">Risk Matrix</div>
+          <h1 className="page-title">四象限分析</h1>
+          <div className="page-subtitle">从偏离度与风险权重两个维度快速定位高风险指标，优先支持临床关注项筛查。</div>
+        </div>
+        <div className="page-status-chip">风险分层 + 健康建议</div>
+      </div>
+
+      <Card className="query-panel" style={{ marginBottom: 24 }}>
+        <div className="query-toolbar">
+          <Input
+            placeholder="输入体检编号 (StudyID)"
+            value={studyId}
+            onChange={e => setStudyId(e.target.value)}
+            onPressEnter={handleSearch}
+            style={{ width: 300 }}
+          />
+          <Button type="primary" onClick={handleSearch} loading={loading}>分析</Button>
+        </div>
+      </Card>
 
       {data && hs && (
         <>
@@ -151,13 +162,14 @@ export default function QuadrantPage() {
           </Row>
 
           {/* 散点图 */}
-          <Card title="四象限风险分布" style={{ marginBottom: 24 }}>
+          <Card className="section-card" title="四象限风险分布" style={{ marginBottom: 24 }}>
             <div ref={chartRef} style={{ height: 400 }} />
           </Card>
 
           {/* 健康建议 — Top 关注项 */}
           {data.top_concerns.length > 0 && (
             <Card
+              className="section-card"
               title={<span><MedicineBoxOutlined /> 健康建议（{data.top_concerns.length} 项需关注）</span>}
               style={{ marginBottom: 24 }}
             >
@@ -194,7 +206,7 @@ export default function QuadrantPage() {
           )}
 
           {/* 全部指标明细 */}
-          <Card title={`全部指标明细 (${allItems.length} 项)`}>
+          <Card className="section-card table-card" title={`全部指标明细 (${allItems.length} 项)`}>
             <Table
               dataSource={allItems}
               rowKey={(r, i) => `${r.standard_code}-${i}`}
@@ -237,10 +249,6 @@ export default function QuadrantPage() {
             style={{ marginTop: 16 }}
           />
 
-          <style>{`
-            .row-abnormal { background: #fff2f0 !important; }
-            .row-abnormal:hover > td { background: #ffece8 !important; }
-          `}</style>
         </>
       )}
     </div>

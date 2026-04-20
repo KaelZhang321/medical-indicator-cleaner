@@ -109,30 +109,73 @@ export interface QuadrantResponse {
   disclaimer: string;
 }
 
+export interface SystemScore {
+  system: string;
+  key: string;
+  score: number;
+  status: string;
+  trend: string;
+  abnormal_count: number;
+  worst_indicator: string;
+  key_findings: string[];
+}
+
+export interface DerivedIndicator {
+  code: string;
+  name: string;
+  value: number;
+  ref_min: number | null;
+  ref_max: number | null;
+  status: string;
+  direction: string;
+  clinical: string;
+}
+
+export interface TopRisk {
+  code: string;
+  name: string;
+  category: string;
+  value: number | null;
+  unit: string;
+  trend_type: string;
+  predicted_6m: number | null;
+  consecutive_abnormal: number;
+  risk_score: number;
+  slope_direction: string;
+}
+
+export interface IndicatorFeature {
+  code: string;
+  name: string;
+  category: string;
+  latest_value: number | null;
+  previous_value: number | null;
+  change_rate: number | null;
+  is_abnormal: boolean;
+  trend: string;
+  risk_level: string;
+}
+
 export interface FeaturesResponse {
   patient_id: string;
   exam_count: number;
+  time_span: string;
+  overall_score: number;
+  overall_level: string;
+  overall_color: string;
   summary: {
     total_indicators: number;
     abnormal_count: number;
     worsening_count: number;
     improving_count: number;
-    new_abnormal_count: number;
-    stable_abnormal_count: number;
     overall_trend: string;
   };
-  indicators: Array<{
-    code: string;
-    name: string;
-    category: string;
-    latest_value: number | null;
-    previous_value: number | null;
-    change_rate: number | null;
-    is_abnormal: boolean;
-    trend: string;
-    risk_level: string;
-  }>;
-  features: Record<string, number | null>;
+  system_scores: SystemScore[];
+  derived_indicators: DerivedIndicator[];
+  top_risks: TopRisk[];
+  positive_changes: string[];
+  indicators: IndicatorFeature[];
+  disclaimer: string;
 }
 
 export const fetchExam = (studyId: string) =>
