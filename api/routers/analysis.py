@@ -112,8 +112,13 @@ def get_features(sfzh: str) -> FeaturesResponse:
     cleaner = get_cleaner()
     ref_df = get_reference_ranges()
 
-    # Sort by exam_time
+    # Sort by exam_time and filter to recent 3 years
+    from datetime import datetime, timedelta
+    three_years_ago = (datetime.now() - timedelta(days=3 * 365)).strftime("%Y-%m-%d")
     sorted_frames = sorted(frames, key=lambda f: str(f["exam_time"].iloc[0]) if not f.empty else "")
+    sorted_frames = [f for f in sorted_frames if not f.empty and str(f["exam_time"].iloc[0])[:10] >= three_years_ago]
+    if not sorted_frames:
+        raise HTTPException(status_code=404, detail="近三年内无体检数据")
     latest = sorted_frames[-1]
     previous = sorted_frames[-2] if len(sorted_frames) > 1 else None
 
