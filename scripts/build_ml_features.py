@@ -16,7 +16,10 @@ ensure_project_root_on_path(__file__)
 
 
 def build_features(patient_records: list[pd.DataFrame]) -> pd.DataFrame:
-    ordered = sorted(patient_records, key=lambda df: df["exam_time"].iloc[0] if not df.empty else "")
+    ordered = sorted(
+        patient_records,
+        key=lambda df: str(df["exam_time"].iloc[0])[:10] if not df.empty else "",
+    )
     latest = ordered[-1] if ordered else pd.DataFrame()
     previous = ordered[-2] if len(ordered) > 1 else pd.DataFrame()
     features: dict[str, object] = {"abnormal_count": int(latest["is_abnormal"].fillna(False).sum()) if not latest.empty else 0}

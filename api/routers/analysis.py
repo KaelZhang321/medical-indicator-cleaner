@@ -2,12 +2,17 @@
 from __future__ import annotations
 
 import math
+from datetime import datetime, timedelta
+from typing import Any
 
+import pandas as pd
 from fastapi import APIRouter, HTTPException
 
-from api.deps import get_cleaner, get_data_source, get_db, get_reference_ranges, get_risk_weights
+from api.deps import get_cleaner, get_config, get_data_source, get_db, get_reference_ranges, get_risk_weights
 from api.schemas import FeaturesResponse, FeaturesSummary, IndicatorFeature, QuadrantItem, QuadrantResponse, QuadrantStats
+from scripts.build_ml_features import build_features
 from src.risk_analyzer import calc_deviation, classify_quadrant
+from src.pipeline import StandardizationPipeline
 
 router = APIRouter(prefix="/api/v1", tags=["analysis"])
 
@@ -109,20 +114,30 @@ def get_features(sfzh: str) -> FeaturesResponse:
     if not frames:
         raise HTTPException(status_code=404, detail="No exams found for this patient")
 
-    cleaner = get_cleaner()
-    ref_df = get_reference_ranges()
-
-    # Sort by exam_time and filter to recent 3 years
-    from datetime import datetime, timedelta
     three_years_ago = (datetime.now() - timedelta(days=3 * 365)).strftime("%Y-%m-%d")
     sorted_frames = sorted(frames, key=lambda f: str(f["exam_time"].iloc[0]) if not f.empty else "")
     sorted_frames = [f for f in sorted_frames if not f.empty and str(f["exam_time"].iloc[0])[:10] >= three_years_ago]
     if not sorted_frames:
         raise HTTPException(status_code=404, detail="近三年内无体检数据")
-    latest = sorted_frames[-1]
-    previous = sorted_frames[-2] if len(sorted_frames) > 1 else None
+    null_matcher = type("NullMatcher", (), {"is_index_loaded": lambda self: False})()
+    noop_ai = type("NoopAIReviewer", (), {"review": lambda self, results: results})()
+    pipeline = StandardizationPipeline(
+        config_path="config/settings.yaml",
+        output_dir=get_config()["data"]["output_dir"],
+        strict=False,
+        matcher=null_matcher,
+        ai_reviewer=noop_ai,
+    )
+    standardized_frames = [
+        pd.DataFrame(pipeline.standardize_dataframe(pipeline.preprocessor.enhance_dataframe(frame)))
+        for frame in sorted_frames
+    ]
+    latest = standardized_frames[-1]
+    previous = standardized_frames[-2] if len(standardized_frames) > 1 else None
 
-    features: dict[str, float | int | None] = {}
+    features_df = build_features(standardized_frames)
+    features = features_df.iloc[0].to_dict() if not features_df.empty else {"abnormal_count": 0}
+
     indicators: list[IndicatorFeature] = []
     abnormal_count = 0
     worsening_count = 0
@@ -131,58 +146,30 @@ def get_features(sfzh: str) -> FeaturesResponse:
     stable_abnormal_count = 0
 
     for _, row in latest.iterrows():
-        item_name = str(row.get("item_name", "") or "")
-        clean = cleaner.clean(item_name)
-        code = clean.standard_code or str(row.get("item_code", ""))
-        name = clean.standard_name or clean.cleaned
-        category = clean.category or ""
-
-        raw_val = row.get("result_value_raw")
-        try:
-            numeric = float(raw_val) if raw_val is not None else None
-        except (ValueError, TypeError):
-            numeric = None
-        if numeric is not None and math.isnan(numeric):
-            numeric = None
-
-        if numeric is None:
+        numeric = row.get("numeric_value")
+        if numeric is None or (isinstance(numeric, float) and math.isnan(numeric)):
             continue
 
-        features[f"{code}_latest"] = numeric
-        is_abnormal = row.get("abnormal_flag") in (1, 2, "1", "2")
+        code = str(row.get("standard_code", "") or row.get("item_code", ""))
+        name = str(row.get("standard_name", "") or row.get("cleaned_name", "") or row.get("item_name", ""))
+        category = str(row.get("category", "") or "")
+        is_abnormal = bool(row.get("is_abnormal", False))
         if is_abnormal:
             abnormal_count += 1
 
-        # Lookup reference range for context
-        ref_min_val, ref_max_val = None, None
-        if not ref_df.empty:
-            ref_rows = ref_df[ref_df["standard_code"] == code]
-            if not ref_rows.empty:
-                rm = ref_rows.iloc[0].get("ref_min")
-                rx = ref_rows.iloc[0].get("ref_max")
-                ref_min_val = rm if rm is not None and not (isinstance(rm, float) and math.isnan(rm)) else None
-                ref_max_val = rx if rx is not None and not (isinstance(rx, float) and math.isnan(rx)) else None
-
-        # Compare with previous
-        prev_val: float | None = None
-        change_rate: float | None = None
-        was_abnormal = False
+        prev_val = None
+        change_rate = features.get(f"{code}_change_rate")
         if previous is not None:
-            prev_rows = previous[previous["item_name"] == row.get("item_name")]
+            prev_rows = previous[previous["standard_code"] == code]
             if not prev_rows.empty:
-                prev_raw = prev_rows.iloc[0].get("result_value_raw")
-                try:
-                    prev_val = float(prev_raw) if prev_raw is not None else None
-                except (ValueError, TypeError):
-                    prev_val = None
-                if prev_val is not None and math.isnan(prev_val):
-                    prev_val = None
-                if prev_val is not None and prev_val != 0:
-                    change_rate = round((numeric - prev_val) / prev_val, 4)
-                    features[f"{code}_change_rate"] = change_rate
-                was_abnormal = prev_rows.iloc[0].get("abnormal_flag") in (1, 2, "1", "2")
+                prev_numeric = prev_rows.iloc[0].get("numeric_value")
+                prev_val = None if pd.isna(prev_numeric) else prev_numeric
+                was_abnormal = bool(prev_rows.iloc[0].get("is_abnormal", False))
+            else:
+                was_abnormal = False
+        else:
+            was_abnormal = False
 
-        # Determine trend and risk_level
         trend = ""
         risk_level = ""
         if change_rate is not None:
@@ -193,13 +180,17 @@ def get_features(sfzh: str) -> FeaturesResponse:
             else:
                 trend = "稳定"
 
-        # Clinical risk assessment
+        ref_min_val = row.get("ref_min")
+        ref_max_val = row.get("ref_max")
+        ref_min_val = None if pd.isna(ref_min_val) else ref_min_val
+        ref_max_val = None if pd.isna(ref_max_val) else ref_max_val
+
         if is_abnormal and not was_abnormal:
             risk_level = "新增异常"
             new_abnormal_count += 1
         elif is_abnormal and was_abnormal:
             if ref_max_val is not None and numeric > ref_max_val:
-                if prev_val is not None and prev_val <= ref_max_val:
+                if prev_val is not None and ref_max_val is not None and prev_val <= ref_max_val:
                     risk_level = "恶化"
                     worsening_count += 1
                 elif change_rate is not None and change_rate > 0.1:
@@ -224,21 +215,22 @@ def get_features(sfzh: str) -> FeaturesResponse:
         else:
             risk_level = "正常"
 
-        indicators.append(IndicatorFeature(
-            code=code,
-            name=name,
-            category=category,
-            latest_value=numeric,
-            previous_value=prev_val,
-            change_rate=change_rate,
-            is_abnormal=is_abnormal,
-            trend=trend,
-            risk_level=risk_level,
-        ))
+        indicators.append(
+            IndicatorFeature(
+                code=code,
+                name=name,
+                category=category,
+                latest_value=numeric,
+                previous_value=prev_val,
+                change_rate=change_rate,
+                is_abnormal=is_abnormal,
+                trend=trend,
+                risk_level=risk_level,
+            )
+        )
 
     features["abnormal_count"] = abnormal_count
 
-    # Overall trend
     if worsening_count > improving_count + 2:
         overall_trend = "整体恶化"
     elif improving_count > worsening_count + 2:
@@ -256,8 +248,22 @@ def get_features(sfzh: str) -> FeaturesResponse:
         overall_trend=overall_trend,
     )
 
-    # Sort: abnormal first, then by abs change_rate desc
     indicators.sort(key=lambda i: (not i.is_abnormal, -abs(i.change_rate or 0)))
+
+    def _sanitize(value: Any) -> Any:
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        if isinstance(value, dict):
+            return {k: _sanitize(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [_sanitize(v) for v in value]
+        if hasattr(value, "dict"):
+            return _sanitize(value.dict())
+        return value
+
+    features = _sanitize(features)
+    indicators = _sanitize(indicators)
+    summary = _sanitize(summary)
 
     masked_id = sfzh[:4] + "****" + sfzh[-4:] if len(sfzh) > 8 else sfzh
     return FeaturesResponse(

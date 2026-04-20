@@ -47,6 +47,9 @@ class StandardizationPipeline:
         index_path = Path(self.config["index"]["path"])
         if not (index_path / "faiss.index").exists() or not (index_path / "metadata.pkl").exists():
             return NullMatcher()
+        if self.config.get("preprocessing", {}).get("strict", True) is False:
+            # In lenient/diagnostic paths, avoid forcing model init unless caller explicitly provides a matcher.
+            return NullMatcher()
 
         matcher = L2EmbeddingMatcher(
             model_name=self.config["model"]["name"],
@@ -99,6 +102,11 @@ class StandardizationPipeline:
             return dataframe.fillna("")
 
         return self.preprocessor.process_file(str(path))
+
+    def standardize_dataframe(self, dataframe: pd.DataFrame) -> list[dict[str, Any]]:
+        """Public wrapper for standardized records from an already-loaded dataframe."""
+        results = self._standardize_dataframe(dataframe)
+        return self.ai_reviewer.review(results)
 
     def _standardize_dataframe(self, dataframe: pd.DataFrame) -> list[dict[str, Any]]:
         names = dataframe["item_name"].fillna("").astype(str).tolist()

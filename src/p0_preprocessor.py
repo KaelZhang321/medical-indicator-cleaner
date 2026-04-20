@@ -114,6 +114,10 @@ class P0Preprocessor:
     def process(self, json_data: dict[str, Any]) -> pd.DataFrame:
         """Run flatten, filter, deduplicate, and result-value parsing."""
         df = self._flatten_items(json_data)
+        return self.enhance_dataframe(df)
+
+    def enhance_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Apply filtering, deduplication, parsing, unit normalization, and abnormal derivation to a flat dataframe."""
         df = self._filter_departments(df)
 
         if self.enable_deduplicate:

@@ -74,7 +74,7 @@ def test_search_exact_name() -> None:
 
     results = matcher.search("总胆固醇")
 
-    assert results[0]["standard_code"] == "HY-BZ-001"
+    assert results[0]["standard_code"] == "040201"
     assert results[0]["standard_name"] == "总胆固醇"
     assert results[0]["score"] > 0.9
 
@@ -86,8 +86,8 @@ def test_search_synonym() -> None:
 
     results = matcher.search("谷丙转氨酶")
 
-    assert results[0]["standard_code"] == "HY-GG-001"
-    assert results[0]["standard_name"] == "丙氨酸氨基转移酶"
+    assert results[0]["standard_code"] == "040501"
+    assert results[0]["standard_name"] in {"谷丙转氨酶", "丙氨酸氨基转移酶"}
 
 
 def test_search_abbreviation() -> None:
@@ -97,7 +97,7 @@ def test_search_abbreviation() -> None:
 
     results = matcher.search("TC")
 
-    assert results[0]["standard_code"] == "HY-BZ-001"
+    assert results[0]["standard_code"] == "040201"
     assert results[0]["matched_text"] in {"TC", "总胆固醇", "胆固醇", "CHOL"}
 
 
@@ -132,7 +132,7 @@ def test_save_and_load_index(tmp_path: Path) -> None:
     reloaded.load_index(str(tmp_path))
 
     assert reloaded.is_index_loaded() is True
-    assert reloaded.search("总胆固醇")[0]["standard_code"] == "HY-BZ-001"
+    assert reloaded.search("总胆固醇")[0]["standard_code"] == "040201"
 
 
 def test_search_batch() -> None:
@@ -143,5 +143,5 @@ def test_search_batch() -> None:
     results = matcher.search_batch(["总胆固醇", "谷丙转氨酶"], top_k=2)
 
     assert len(results) == 2
-    assert results[0][0]["standard_code"] == "HY-BZ-001"
-    assert results[1][0]["standard_code"] == "HY-GG-001"
+    assert results[0][0]["standard_code"] == "040201"
+    assert results[1][0]["standard_code"] == "040501"

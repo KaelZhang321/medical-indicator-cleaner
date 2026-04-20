@@ -88,7 +88,7 @@ def test_add_alias_and_lookup(tmp_path: Path) -> None:
     standard_path = tmp_path / "standard_dict.csv"
     alias_path = tmp_path / "alias_dict.csv"
     pd.read_csv("data/standard_dict.csv").to_csv(standard_path, index=False)
-    pd.read_csv("data/alias_dict.csv").to_csv(alias_path, index=False)
+    pd.DataFrame(columns=["alias", "standard_code", "source", "added_date"]).to_csv(alias_path, index=False)
 
     manager = DictManager(str(standard_path), str(alias_path))
     manager.add_alias("总胆固醇项目", "040201")
@@ -106,7 +106,7 @@ def test_add_alias_no_duplicate(tmp_path: Path) -> None:
     standard_path = tmp_path / "standard_dict.csv"
     alias_path = tmp_path / "alias_dict.csv"
     pd.read_csv("data/standard_dict.csv").to_csv(standard_path, index=False)
-    pd.read_csv("data/alias_dict.csv").to_csv(alias_path, index=False)
+    pd.DataFrame(columns=["alias", "standard_code", "source", "added_date"]).to_csv(alias_path, index=False)
 
     manager = DictManager(str(standard_path), str(alias_path))
     manager.add_alias("总胆固醇项目", "040201")
@@ -120,7 +120,7 @@ def test_alias_persisted_to_csv(tmp_path: Path) -> None:
     standard_path = tmp_path / "standard_dict.csv"
     alias_path = tmp_path / "alias_dict.csv"
     pd.read_csv("data/standard_dict.csv").to_csv(standard_path, index=False)
-    pd.read_csv("data/alias_dict.csv").to_csv(alias_path, index=False)
+    pd.DataFrame(columns=["alias", "standard_code", "source", "added_date"]).to_csv(alias_path, index=False)
 
     manager = DictManager(str(standard_path), str(alias_path))
     manager.add_alias("总胆固醇项目", "040201", source="manual_review")

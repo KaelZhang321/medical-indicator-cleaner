@@ -88,6 +88,26 @@ export interface QuadrantResponse {
 export interface FeaturesResponse {
   patient_id: string;
   exam_count: number;
+  summary: {
+    total_indicators: number;
+    abnormal_count: number;
+    worsening_count: number;
+    improving_count: number;
+    new_abnormal_count: number;
+    stable_abnormal_count: number;
+    overall_trend: string;
+  };
+  indicators: Array<{
+    code: string;
+    name: string;
+    category: string;
+    latest_value: number | null;
+    previous_value: number | null;
+    change_rate: number | null;
+    is_abnormal: boolean;
+    trend: string;
+    risk_level: string;
+  }>;
   features: Record<string, number | null>;
 }
 

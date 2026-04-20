@@ -24,7 +24,7 @@ class FakeMatcher:
         if query == "胆固醇偏写":
             return [
                 {
-                    "standard_code": "HY-BZ-001",
+                    "standard_code": "040201",
                     "standard_name": "总胆固醇",
                     "category": "血脂",
                     "matched_text": "总胆固醇",
@@ -45,7 +45,7 @@ class FakeAIReviewer:
                 updated = dict(result)
                 updated.update(
                     {
-                        "standard_code": "HY-BZ-001",
+                        "standard_code": "040201",
                         "standard_name": "总胆固醇",
                         "category": "血脂",
                         "confidence": 0.97,
@@ -115,7 +115,8 @@ def test_pipeline_json_input(tmp_path: Path) -> None:
     classified = build_pipeline(tmp_path).run(str(input_path))
 
     assert classified["stats"]["total"] == 2
-    assert classified["stats"]["auto_count"] == 2
+    assert classified["stats"]["auto_count"] == 1
+    assert classified["stats"]["manual_count"] == 1
 
 
 def test_pipeline_json_output_preserves_p0_fields(tmp_path: Path) -> None:
@@ -192,7 +193,7 @@ def test_pipeline_auto_mapped_accuracy(tmp_path: Path) -> None:
 
     classified = build_pipeline(tmp_path).run(str(input_path))
 
-    assert {row["standard_code"] for row in classified["auto_mapped"]} == {"HY-BZ-001"}
+    assert {row["standard_code"] for row in classified["auto_mapped"]} == {"040201"}
 
 
 def test_pipeline_no_data_loss(tmp_path: Path) -> None:
@@ -230,7 +231,12 @@ def test_pipeline_runs_without_l2_index(tmp_path: Path) -> None:
     input_path = tmp_path / "sample.csv"
     pd.DataFrame({"item_name": ["总胆固醇", "某某新检测项"]}).to_csv(input_path, index=False)
 
-    pipeline = StandardizationPipeline(config_path="config/settings.yaml", output_dir=str(tmp_path))
+    pipeline = StandardizationPipeline(
+        config_path="config/settings.yaml",
+        output_dir=str(tmp_path),
+        matcher=type("NullMatcher", (), {"is_index_loaded": lambda self: False})(),
+        ai_reviewer=type("NoopAIReviewer", (), {"review": lambda self, results: results})(),
+    )
     classified = pipeline.run(str(input_path))
 
     assert classified["stats"]["total"] == 2
