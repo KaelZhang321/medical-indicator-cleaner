@@ -118,8 +118,43 @@ class IndicatorFeature(BaseModel):
     previous_value: float | None = None
     change_rate: float | None = None
     is_abnormal: bool = False
-    trend: str = ""  # 上升/下降/稳定
-    risk_level: str = ""  # 恶化/改善/稳定/新增异常
+    trend: str = ""
+    risk_level: str = ""
+
+
+class SystemScore(BaseModel):
+    system: str
+    key: str = ""
+    score: int = 100
+    status: str = "正常"
+    trend: str = "稳定"
+    abnormal_count: int = 0
+    worst_indicator: str = ""
+    key_findings: list[str] = []
+
+
+class DerivedIndicator(BaseModel):
+    code: str
+    name: str
+    value: float
+    ref_min: float | None = None
+    ref_max: float | None = None
+    status: str = "正常"
+    direction: str = "normal"
+    clinical: str = ""
+
+
+class TopRisk(BaseModel):
+    code: str
+    name: str
+    category: str = ""
+    value: float | None = None
+    unit: str = ""
+    trend_type: str = ""
+    predicted_6m: float | None = None
+    consecutive_abnormal: int = 0
+    risk_score: int = 0
+    slope_direction: str = ""
 
 
 class FeaturesSummary(BaseModel):
@@ -129,12 +164,22 @@ class FeaturesSummary(BaseModel):
     improving_count: int = 0
     new_abnormal_count: int = 0
     stable_abnormal_count: int = 0
-    overall_trend: str = ""  # 整体好转/整体恶化/基本稳定
+    overall_trend: str = ""
 
 
 class FeaturesResponse(BaseModel):
     patient_id: str
     exam_count: int
+    time_span: str = ""
+    overall_score: int = 100
+    overall_level: str = "优秀"
+    overall_color: str = "#52c41a"
     summary: FeaturesSummary
+    system_scores: list[SystemScore] = []
+    derived_indicators: list[DerivedIndicator] = []
+    top_risks: list[TopRisk] = []
+    positive_changes: list[str] = []
     indicators: list[IndicatorFeature]
+    features: dict[str, float | int | None] = {}
+    disclaimer: str = ""
     features: dict[str, float | int | None]

@@ -110,9 +110,15 @@ def get_quadrant(study_id: str) -> QuadrantResponse:
     )
 
 
-@router.get("/patient/{sfzh}/features", response_model=FeaturesResponse)
-def get_features(sfzh: str) -> FeaturesResponse:
-    """Generate ML prediction features with clinical analysis for a patient."""
+@router.get("/patient/{sfzh}/features")
+def get_features(sfzh: str):
+    """Comprehensive health assessment using HealthAssessmentEngine."""
+    from api.schemas import (
+        DerivedIndicator, FeaturesResponse, FeaturesSummary,
+        IndicatorFeature, SystemScore, TopRisk,
+    )
+    from src.health_assessment import HealthAssessmentEngine
+
     db = get_db()
     try:
         ds = get_data_source(db)
@@ -123,162 +129,109 @@ def get_features(sfzh: str) -> FeaturesResponse:
     if not frames:
         raise HTTPException(status_code=404, detail="No exams found for this patient")
 
+    # Filter to recent 3 years
     three_years_ago = (datetime.now() - timedelta(days=3 * 365)).strftime("%Y-%m-%d")
     sorted_frames = sorted(frames, key=lambda f: str(f["exam_time"].iloc[0]) if not f.empty else "")
     sorted_frames = [f for f in sorted_frames if not f.empty and str(f["exam_time"].iloc[0])[:10] >= three_years_ago]
     if not sorted_frames:
         raise HTTPException(status_code=404, detail="近三年内无体检数据")
-    null_matcher = type("NullMatcher", (), {"is_index_loaded": lambda self: False})()
-    noop_ai = type("NoopAIReviewer", (), {"review": lambda self, results: results})()
-    pipeline = StandardizationPipeline(
-        config_path="config/settings.yaml",
-        output_dir=get_config()["data"]["output_dir"],
-        strict=False,
-        matcher=null_matcher,
-        ai_reviewer=noop_ai,
-    )
-    standardized_frames = [
-        pd.DataFrame(pipeline.standardize_dataframe(pipeline.preprocessor.enhance_dataframe(frame)))
-        for frame in sorted_frames
-    ]
-    latest = standardized_frames[-1]
-    previous = standardized_frames[-2] if len(standardized_frames) > 1 else None
 
-    features_df = build_features(standardized_frames)
-    features = features_df.iloc[0].to_dict() if not features_df.empty else {"abnormal_count": 0}
+    cleaner = get_cleaner()
+    ref_df = get_reference_ranges()
 
-    indicators: list[IndicatorFeature] = []
-    abnormal_count = 0
-    worsening_count = 0
-    improving_count = 0
-    new_abnormal_count = 0
-    stable_abnormal_count = 0
+    # Build exam_frames for HealthAssessmentEngine
+    exam_frames: list[dict] = []
+    for frame in sorted_frames:
+        exam_time = str(frame["exam_time"].iloc[0]) if not frame.empty else ""
+        indicators_map: dict[str, dict] = {}
+        for _, row in frame.iterrows():
+            item_name = str(row.get("item_name", "") or "")
+            clean = cleaner.clean(item_name)
+            code = clean.standard_code or str(row.get("item_code", ""))
+            raw_val = row.get("result_value_raw")
+            try:
+                numeric = float(raw_val) if raw_val is not None else None
+            except (ValueError, TypeError):
+                numeric = None
+            if numeric is not None and math.isnan(numeric):
+                numeric = None
+            if numeric is None or not code:
+                continue
+            indicators_map[code] = {
+                "name": clean.standard_name or clean.cleaned,
+                "value": numeric,
+                "category": clean.category or "",
+                "unit": str(row.get("unit_raw", "") or ""),
+            }
+        exam_frames.append({"exam_time": exam_time, "indicators": indicators_map})
 
-    for _, row in latest.iterrows():
-        numeric = row.get("numeric_value")
-        if numeric is None or (isinstance(numeric, float) and math.isnan(numeric)):
-            continue
+    # Build ref_lookup
+    ref_lookup: dict[str, tuple[float | None, float | None]] = {}
+    if not ref_df.empty:
+        for _, r in ref_df.iterrows():
+            code = str(r.get("standard_code", ""))
+            rmin = r.get("ref_min")
+            rmax = r.get("ref_max")
+            rmin = None if rmin is not None and isinstance(rmin, float) and math.isnan(rmin) else rmin
+            rmax = None if rmax is not None and isinstance(rmax, float) and math.isnan(rmax) else rmax
+            if code and code not in ref_lookup:
+                ref_lookup[code] = (rmin, rmax)
 
-        code = str(row.get("standard_code", "") or row.get("item_code", ""))
-        name = str(row.get("standard_name", "") or row.get("cleaned_name", "") or row.get("item_name", ""))
-        category = str(row.get("category", "") or "")
-        is_abnormal = bool(row.get("is_abnormal", False))
-        if is_abnormal:
-            abnormal_count += 1
+    # Run assessment
+    engine = HealthAssessmentEngine()
+    report = engine.assess(exam_frames, ref_lookup)
 
-        prev_val = None
-        change_rate = features.get(f"{code}_change_rate")
-        if previous is not None:
-            prev_rows = previous[previous["standard_code"] == code]
-            if not prev_rows.empty:
-                prev_numeric = prev_rows.iloc[0].get("numeric_value")
-                prev_val = None if pd.isna(prev_numeric) else prev_numeric
-                was_abnormal = bool(prev_rows.iloc[0].get("is_abnormal", False))
-            else:
-                was_abnormal = False
-        else:
-            was_abnormal = False
+    # Build indicator features (from latest exam with trend info)
+    indicator_features: list[IndicatorFeature] = []
+    if exam_frames:
+        latest_inds = exam_frames[-1].get("indicators", {})
+        prev_inds = exam_frames[-2].get("indicators", {}) if len(exam_frames) >= 2 else {}
+        for code, info in latest_inds.items():
+            ref = ref_lookup.get(code, (None, None))
+            val = info["value"]
+            is_abn = (ref[0] is not None and val < ref[0]) or (ref[1] is not None and val > ref[1])
+            prev_val = prev_inds.get(code, {}).get("value")
+            change_rate = None
+            if prev_val is not None and prev_val != 0:
+                change_rate = round((val - prev_val) / abs(prev_val), 4)
+            trend = ""
+            if change_rate is not None:
+                trend = "上升" if change_rate > 0.05 else "下降" if change_rate < -0.05 else "稳定"
+            # Risk level from top_risks
+            risk_item = next((r for r in report.get("top_risks", []) if r["code"] == code), None)
+            risk_level = risk_item["trend_type"] if risk_item else ("异常" if is_abn else "正常")
+            indicator_features.append(IndicatorFeature(
+                code=code, name=info["name"], category=info["category"],
+                latest_value=val, previous_value=prev_val,
+                change_rate=change_rate, is_abnormal=is_abn, trend=trend, risk_level=risk_level,
+            ))
+    indicator_features.sort(key=lambda i: (not i.is_abnormal, -abs(i.change_rate or 0)))
 
-        trend = ""
-        risk_level = ""
-        if change_rate is not None:
-            if change_rate > 0.05:
-                trend = "上升"
-            elif change_rate < -0.05:
-                trend = "下降"
-            else:
-                trend = "稳定"
-
-        ref_min_val = row.get("ref_min")
-        ref_max_val = row.get("ref_max")
-        ref_min_val = None if pd.isna(ref_min_val) else ref_min_val
-        ref_max_val = None if pd.isna(ref_max_val) else ref_max_val
-
-        if is_abnormal and not was_abnormal:
-            risk_level = "新增异常"
-            new_abnormal_count += 1
-        elif is_abnormal and was_abnormal:
-            if ref_max_val is not None and numeric > ref_max_val:
-                if prev_val is not None and ref_max_val is not None and prev_val <= ref_max_val:
-                    risk_level = "恶化"
-                    worsening_count += 1
-                elif change_rate is not None and change_rate > 0.1:
-                    risk_level = "恶化"
-                    worsening_count += 1
-                else:
-                    risk_level = "持续异常"
-                    stable_abnormal_count += 1
-            elif ref_min_val is not None and numeric < ref_min_val:
-                if change_rate is not None and change_rate < -0.1:
-                    risk_level = "恶化"
-                    worsening_count += 1
-                else:
-                    risk_level = "持续异常"
-                    stable_abnormal_count += 1
-            else:
-                risk_level = "持续异常"
-                stable_abnormal_count += 1
-        elif not is_abnormal and was_abnormal:
-            risk_level = "改善"
-            improving_count += 1
-        else:
-            risk_level = "正常"
-
-        indicators.append(
-            IndicatorFeature(
-                code=code,
-                name=name,
-                category=category,
-                latest_value=numeric,
-                previous_value=prev_val,
-                change_rate=change_rate,
-                is_abnormal=is_abnormal,
-                trend=trend,
-                risk_level=risk_level,
-            )
-        )
-
-    features["abnormal_count"] = abnormal_count
-
-    if worsening_count > improving_count + 2:
-        overall_trend = "整体恶化"
-    elif improving_count > worsening_count + 2:
-        overall_trend = "整体好转"
-    else:
-        overall_trend = "基本稳定"
-
-    summary = FeaturesSummary(
-        total_indicators=len(indicators),
-        abnormal_count=abnormal_count,
-        worsening_count=worsening_count,
-        improving_count=improving_count,
-        new_abnormal_count=new_abnormal_count,
-        stable_abnormal_count=stable_abnormal_count,
-        overall_trend=overall_trend,
-    )
-
-    indicators.sort(key=lambda i: (not i.is_abnormal, -abs(i.change_rate or 0)))
-
-    def _sanitize(value: Any) -> Any:
-        if isinstance(value, float) and math.isnan(value):
-            return None
-        if isinstance(value, dict):
-            return {k: _sanitize(v) for k, v in value.items()}
-        if isinstance(value, list):
-            return [_sanitize(v) for v in value]
-        if hasattr(value, "dict"):
-            return _sanitize(value.dict())
-        return value
-
-    features = _sanitize(features)
-    indicators = _sanitize(indicators)
-    summary = _sanitize(summary)
+    # Count stats
+    abnormal_count = sum(1 for i in indicator_features if i.is_abnormal)
+    worsening = sum(1 for r in report.get("top_risks", []) if r.get("trend_type") in ("加速恶化", "减速恶化"))
+    improving = len(report.get("positive_changes", []))
 
     masked_id = sfzh[:4] + "****" + sfzh[-4:] if len(sfzh) > 8 else sfzh
     return FeaturesResponse(
         patient_id=masked_id,
-        exam_count=len(sorted_frames),
-        summary=summary,
-        indicators=indicators,
-        features=features,
+        exam_count=report.get("exam_count", len(sorted_frames)),
+        time_span=report.get("time_span", ""),
+        overall_score=report.get("overall_score", 100),
+        overall_level=report.get("overall_level", "优秀"),
+        overall_color=report.get("overall_color", "#52c41a"),
+        summary=FeaturesSummary(
+            total_indicators=len(indicator_features),
+            abnormal_count=abnormal_count,
+            worsening_count=worsening,
+            improving_count=improving,
+            overall_trend=report.get("overall_trend", "基本稳定"),
+        ),
+        system_scores=[SystemScore(**{k: v for k, v in s.items() if k != "weight"}) for s in report.get("system_scores", [])],
+        derived_indicators=[DerivedIndicator(**d) for d in report.get("derived_indicators", [])],
+        top_risks=[TopRisk(**r) for r in report.get("top_risks", [])],
+        positive_changes=report.get("positive_changes", []),
+        indicators=indicator_features,
+        features={},
+        disclaimer=report.get("disclaimer", ""),
     )
