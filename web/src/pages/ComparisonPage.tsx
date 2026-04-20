@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Input, Button, Table, Tag, Select, Space, message } from 'antd';
+import { Input, Button, Table, Tag, Select, Switch, Space, message } from 'antd';
 import { LineChartOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { Line } from '@antv/g2plot';
@@ -11,6 +11,7 @@ export default function ComparisonPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ComparisonResponse | null>(null);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [onlyAbnormal, setOnlyAbnormal] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<Line | null>(null);
 
@@ -138,13 +139,26 @@ export default function ComparisonPage() {
           options={categories.map(c => ({ label: c, value: c }))}
         />
         <Button type="primary" onClick={handleSearch} loading={loading}>对比查询</Button>
+        {data && (
+          <Switch
+            checkedChildren="仅看异常"
+            unCheckedChildren="全部指标"
+            checked={onlyAbnormal}
+            onChange={setOnlyAbnormal}
+          />
+        )}
       </Space>
 
       {data && (
         <>
           <Table
             columns={columns}
-            dataSource={data.comparisons}
+            dataSource={onlyAbnormal ? data.comparisons.filter(c => {
+              const latestDate = data.exam_dates[data.exam_dates.length - 1];
+              const val = latestDate ? c.values[latestDate] : null;
+              if (val == null) return false;
+              return (c.ref_max != null && val > c.ref_max) || (c.ref_min != null && val < c.ref_min);
+            }) : data.comparisons}
             rowKey="standard_code"
             size="small"
             pagination={{ pageSize: 15 }}

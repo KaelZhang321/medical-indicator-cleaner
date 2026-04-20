@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Input, Button, Table, Tag, Card, Descriptions, Statistic, Row, Col, Space, message } from 'antd';
+import { Input, Button, Table, Tag, Card, Descriptions, Statistic, Row, Col, Space, Switch, message } from 'antd';
 import { SearchOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { fetchExam, type Indicator, type ExamResponse } from '../api';
@@ -8,6 +8,7 @@ export default function ExamPage() {
   const [studyId, setStudyId] = useState('');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ExamResponse | null>(null);
+  const [onlyAbnormal, setOnlyAbnormal] = useState(false);
 
   const handleSearch = async () => {
     if (!studyId.trim()) {
@@ -97,6 +98,14 @@ export default function ExamPage() {
         <Button type="primary" onClick={handleSearch} loading={loading}>
           查询
         </Button>
+        {data && (
+          <Switch
+            checkedChildren="仅看异常"
+            unCheckedChildren="全部指标"
+            checked={onlyAbnormal}
+            onChange={setOnlyAbnormal}
+          />
+        )}
       </Space>
 
       {data && (
@@ -124,7 +133,7 @@ export default function ExamPage() {
 
           <Table
             columns={columns}
-            dataSource={data.indicators}
+            dataSource={onlyAbnormal ? data.indicators.filter(i => i.is_abnormal) : data.indicators}
             rowKey={(r, i) => `${r.standard_code}-${i}`}
             size="small"
             pagination={{ pageSize: 20, showTotal: t => `共 ${t} 项` }}
