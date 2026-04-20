@@ -87,7 +87,7 @@ export default function ComparisonPage() {
     { title: '指标', dataIndex: 'standard_name', width: 180 },
     { title: '分类', dataIndex: 'category', width: 100, render: (c: string) => <Tag color="blue">{c}</Tag> },
     { title: '单位', dataIndex: 'unit', width: 80 },
-    ...(data?.exam_dates || []).map(date => ({
+    ...([...(data?.exam_dates || [])].reverse()).map(date => ({
       title: date,
       key: date,
       width: 100,
