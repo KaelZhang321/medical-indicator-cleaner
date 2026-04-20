@@ -1,0 +1,124 @@
+# 健康建议生成规则
+# 按分类(category) × 方向(direction) 配置
+
+# 通用模板（按象限）
+quadrant_advice:
+  紧急处理:
+    template: "您的{name}（{value}{unit}）明显超出正常范围（{ref_range}），建议尽快就医"
+    action: "立即就医，专科转诊"
+    urgency: urgent
+  重点关注:
+    template: "您的{name}目前在正常范围内，但属于高风险关键指标，建议密切监测"
+    action: "缩短复查周期至3个月"
+    urgency: watch
+  轻度异常:
+    template: "您的{name}（{value}{unit}）轻微偏{direction}，建议通过生活方式调整改善"
+    action: "生活方式干预，6个月复查"
+    urgency: mild
+  正常范围:
+    template: "您的{name}正常，继续保持"
+    action: "年度常规体检"
+    urgency: routine
+
+# 分类专项建议
+category_advice:
+  血脂:
+    high:
+      diet: "减少饱和脂肪和反式脂肪摄入，增加膳食纤维（燕麦、豆类）"
+      exercise: "每周至少150分钟中等强度有氧运动（快走、游泳）"
+      follow_up: "3-6个月复查血脂四项"
+      specialist: "心内科"
+    low:
+      diet: "适当增加优质脂肪摄入（坚果、橄榄油）"
+      follow_up: "6个月复查"
+
+  血糖:
+    high:
+      diet: "控制碳水化合物总量，选择低GI食物，定时定量进餐"
+      exercise: "餐后30分钟步行15-20分钟，有助于降低餐后血糖"
+      follow_up: "1-3个月复查空腹血糖和糖化血红蛋白(HbA1c)"
+      specialist: "内分泌科"
+    low:
+      diet: "随身携带糖果，规律进餐，避免空腹剧烈运动"
+      follow_up: "排查低血糖原因"
+      specialist: "内分泌科"
+
+  糖代谢:
+    high:
+      diet: "控制碳水化合物总量，选择低GI食物"
+      exercise: "规律有氧运动，每周至少150分钟"
+      follow_up: "1-3个月复查"
+      specialist: "内分泌科"
+
+  肝功能:
+    high:
+      lifestyle: "严格戒酒，避免肝毒性药物（对乙酰氨基酚等需谨慎）"
+      diet: "清淡饮食，避免高脂肪食物"
+      follow_up: "1个月复查肝功能全套"
+      specialist: "消化内科/肝病科"
+
+  肾功能:
+    high:
+      diet: "低盐（每日<6g）、适量蛋白质饮食"
+      lifestyle: "控制血压和血糖，避免肾毒性药物"
+      follow_up: "1-3个月复查肾功能"
+      specialist: "肾内科"
+
+  血常规:
+    high:
+      follow_up: "2周后复查血常规，排除感染或血液系统疾病"
+      specialist: "血液科"
+    low:
+      diet: "贫血者增加含铁食物（红肉、菠菜），配合维生素C促进吸收"
+      follow_up: "1个月复查，必要时查铁蛋白和叶酸"
+      specialist: "血液科"
+
+  甲状腺功能:
+    high:
+      follow_up: "1-3个月复查甲功，结合甲状腺超声评估"
+      specialist: "内分泌科"
+    low:
+      follow_up: "1-3个月复查甲功"
+      specialist: "内分泌科"
+
+  肿瘤标志物:
+    high:
+      follow_up: "2-4周复查确认，结合影像学检查（CT/MRI/超声）综合评估"
+      specialist: "肿瘤科"
+      note: "单次升高不等于肿瘤，炎症、良性疾病也可导致升高"
+
+  凝血功能:
+    high:
+      follow_up: "排查原因，注意出血/血栓风险"
+      specialist: "血液科"
+    low:
+      follow_up: "评估出血风险"
+      specialist: "血液科"
+
+  电解质/微量元素:
+    high:
+      follow_up: "复查确认，评估肾功能"
+      specialist: "肾内科"
+    low:
+      diet: "根据具体元素针对性补充"
+      follow_up: "2-4周复查"
+
+  心肌标志物/炎症:
+    high:
+      follow_up: "尽快完善心电图和心脏超声"
+      specialist: "心内科"
+      note: "心肌标志物升高需紧急排查急性心肌损伤"
+
+  风湿免疫:
+    high:
+      follow_up: "结合临床症状和其他免疫指标综合评估"
+      specialist: "风湿免疫科"
+
+  一般检查:
+    high:
+      lifestyle: "血压偏高者注意低盐饮食、规律运动、控制体重"
+      follow_up: "连续监测血压，必要时就诊"
+      specialist: "心内科"
+
+# 免责声明
+disclaimer: "以上建议仅供健康管理参考，不构成医疗诊断。具体治疗方案请遵医嘱。"

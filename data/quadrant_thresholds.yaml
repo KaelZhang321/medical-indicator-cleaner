@@ -1,0 +1,22 @@
+# 四象限分类阈值配置
+# X轴: |偏离度| (deviation_threshold)
+# Y轴: 风险权重 (risk_threshold)
+
+deviation_threshold: 1.0    # |偏离度| >= 此值视为"异常"
+risk_threshold: 0.7         # 风险权重 >= 此值视为"高风险"
+deviation_cap: 3.0          # 偏离度封顶值
+
+# 健康评分扣分规则
+score_penalties:
+  紧急处理: -8    # 高危+异常
+  重点关注: -3    # 高危+正常
+  轻度异常: -5    # 中低危+异常
+  正常范围: 0     # 中低危+正常
+
+# 健康评分等级
+score_levels:
+  - { min: 90, label: "优秀", color: "#52c41a" }
+  - { min: 75, label: "良好", color: "#1890ff" }
+  - { min: 60, label: "一般", color: "#faad14" }
+  - { min: 40, label: "较差", color: "#fa8c16" }
+  - { min: 0,  label: "危险", color: "#ff4d4f" }
