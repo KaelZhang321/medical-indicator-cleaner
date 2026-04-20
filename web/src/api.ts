@@ -52,7 +52,7 @@ export interface ComparisonItem {
   standard_name: string;
   category: string;
   unit: string;
-  values: Record<string, number | null>;
+  values: Record<string, number | string | null>;
   trend: string;
   ref_min: number | null;
   ref_max: number | null;
@@ -60,29 +60,53 @@ export interface ComparisonItem {
 
 export interface ComparisonResponse {
   patient_id: string;
+  mode: string;
   exam_dates: string[];
   comparisons: ComparisonItem[];
+}
+
+export interface QuadrantAdvice {
+  summary: string;
+  action: string;
+  urgency: string;
+  details: string[];
 }
 
 export interface QuadrantItem {
   standard_name: string;
   standard_code: string;
+  category: string;
   deviation: number;
+  abs_deviation: number;
+  direction: string;
   risk_weight: number;
+  quadrant: string;
   value: number | null;
+  unit: string;
   ref_min: number | null;
   ref_max: number | null;
+  advice: QuadrantAdvice;
+}
+
+export interface HealthScore {
+  score: number;
+  level: string;
+  color: string;
 }
 
 export interface QuadrantResponse {
   study_id: string;
+  health_score: HealthScore;
   quadrants: Record<string, QuadrantItem[]>;
   stats: {
     urgent_count: number;
     watch_count: number;
     mild_count: number;
     normal_count: number;
+    total: number;
   };
+  top_concerns: QuadrantItem[];
+  disclaimer: string;
 }
 
 export interface FeaturesResponse {
@@ -119,6 +143,9 @@ export const fetchPatientExams = (sfzh: string) =>
 
 export const fetchComparison = (sfzh: string, category?: string) =>
   api.get<ComparisonResponse>(`/api/v1/patient/${sfzh}/comparison`, { params: category ? { category } : {} }).then(r => r.data);
+
+export const fetchTextComparison = (sfzh: string, category?: string) =>
+  api.get<ComparisonResponse>(`/api/v1/patient/${sfzh}/comparison`, { params: { mode: 'text', ...(category ? { category } : {}) } }).then(r => r.data);
 
 export const fetchQuadrant = (studyId: string) =>
   api.get<QuadrantResponse>(`/api/v1/exam/${studyId}/quadrant`).then(r => r.data);

@@ -9,9 +9,9 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException
 
 from api.deps import get_cleaner, get_config, get_data_source, get_db, get_reference_ranges, get_risk_weights
-from api.schemas import FeaturesResponse, FeaturesSummary, IndicatorFeature, QuadrantItem, QuadrantResponse, QuadrantStats
+from api.schemas import FeaturesResponse, FeaturesSummary, HealthScore, IndicatorFeature, QuadrantAdvice, QuadrantItem, QuadrantResponse, QuadrantStats
 from scripts.build_ml_features import build_features
-from src.risk_analyzer import calc_deviation, classify_quadrant
+from src.quadrant_analyzer import QuadrantAnalyzer
 from src.pipeline import StandardizationPipeline
 
 router = APIRouter(prefix="/api/v1", tags=["analysis"])
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/v1", tags=["analysis"])
 
 @router.get("/exam/{study_id}/quadrant", response_model=QuadrantResponse)
 def get_quadrant(study_id: str) -> QuadrantResponse:
-    """Four-quadrant risk analysis for a single exam."""
+    """Four-quadrant risk analysis for a single exam using QuadrantAnalyzer v2."""
     db = get_db()
     try:
         ds = get_data_source(db)
@@ -32,23 +32,10 @@ def get_quadrant(study_id: str) -> QuadrantResponse:
 
     cleaner = get_cleaner()
     ref_df = get_reference_ranges()
-    risk_df = get_risk_weights()
+    analyzer = QuadrantAnalyzer()
 
-    # Build risk weight lookup
-    risk_lookup: dict[str, float] = {}
-    for _, row in risk_df.iterrows():
-        try:
-            risk_lookup[str(row["standard_code"])] = float(row["risk_weight"])
-        except (ValueError, TypeError):
-            pass
-
-    quadrants: dict[str, list[QuadrantItem]] = {
-        "紧急处理": [],
-        "重点关注": [],
-        "轻度异常": [],
-        "正常范围": [],
-    }
-
+    # Build indicator list for analyzer
+    indicators: list[dict] = []
     for _, row in df.iterrows():
         item_name = str(row.get("item_name", "") or "")
         clean = cleaner.clean(item_name)
@@ -61,7 +48,6 @@ def get_quadrant(study_id: str) -> QuadrantResponse:
             numeric = None
         if numeric is not None and math.isnan(numeric):
             numeric = None
-
         if numeric is None:
             continue
 
@@ -74,31 +60,54 @@ def get_quadrant(study_id: str) -> QuadrantResponse:
                 ref_min = r.get("ref_min") if not (isinstance(r.get("ref_min"), float) and math.isnan(r.get("ref_min"))) else None
                 ref_max = r.get("ref_max") if not (isinstance(r.get("ref_max"), float) and math.isnan(r.get("ref_max"))) else None
 
-        if ref_min is None or ref_max is None:
-            continue
+        indicators.append({
+            "standard_code": code,
+            "name": clean.standard_name or clean.cleaned,
+            "category": clean.category or "",
+            "value": numeric,
+            "unit": str(row.get("unit_raw", "") or ""),
+            "ref_min": ref_min,
+            "ref_max": ref_max,
+        })
 
-        deviation = calc_deviation(numeric, ref_min, ref_max)
-        risk_weight = risk_lookup.get(code, 0.3)
-        quadrant = classify_quadrant(deviation, risk_weight)
+    # Run analysis
+    result = analyzer.analyze_exam(indicators)
 
-        quadrants[quadrant].append(QuadrantItem(
-            standard_name=clean.standard_name or clean.cleaned,
-            standard_code=code,
-            deviation=round(deviation, 3),
-            risk_weight=risk_weight,
-            value=numeric,
-            ref_min=ref_min,
-            ref_max=ref_max,
-        ))
+    # Convert to response models
+    def _to_item(d: dict) -> QuadrantItem:
+        adv = d.get("advice", {})
+        return QuadrantItem(
+            standard_name=d.get("name", ""),
+            standard_code=d.get("standard_code", ""),
+            category=d.get("category", ""),
+            deviation=d.get("deviation", 0.0),
+            abs_deviation=d.get("abs_deviation", 0.0),
+            direction=d.get("direction", "normal"),
+            risk_weight=d.get("risk_weight", 0.0),
+            quadrant=d.get("quadrant", "正常范围"),
+            value=d.get("value"),
+            unit=d.get("unit", ""),
+            ref_min=d.get("ref_min"),
+            ref_max=d.get("ref_max"),
+            advice=QuadrantAdvice(
+                summary=adv.get("summary", ""),
+                action=adv.get("action", ""),
+                urgency=adv.get("urgency", "routine"),
+                details=adv.get("details", []),
+            ),
+        )
 
-    stats = QuadrantStats(
-        urgent_count=len(quadrants["紧急处理"]),
-        watch_count=len(quadrants["重点关注"]),
-        mild_count=len(quadrants["轻度异常"]),
-        normal_count=len(quadrants["正常范围"]),
+    quadrants = {q: [_to_item(i) for i in items] for q, items in result["quadrants"].items()}
+    hs = result["health_score"]
+
+    return QuadrantResponse(
+        study_id=study_id,
+        health_score=HealthScore(score=hs["score"], level=hs["level"], color=hs["color"]),
+        quadrants=quadrants,
+        stats=QuadrantStats(**result["stats"]),
+        top_concerns=[_to_item(i) for i in result.get("top_concerns", [])],
+        disclaimer=result.get("disclaimer", ""),
     )
-
-    return QuadrantResponse(study_id=study_id, quadrants=quadrants, stats=stats)
 
 
 @router.get("/patient/{sfzh}/features", response_model=FeaturesResponse)

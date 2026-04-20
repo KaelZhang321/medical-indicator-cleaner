@@ -51,7 +51,7 @@ class ComparisonItem(BaseModel):
     standard_name: str
     category: str
     unit: str = ""
-    values: dict[str, float | None]
+    values: dict[str, float | str | None]
     trend: str = ""
     ref_min: float | None = None
     ref_max: float | None = None
@@ -59,18 +59,38 @@ class ComparisonItem(BaseModel):
 
 class ComparisonResponse(BaseModel):
     patient_id: str
+    mode: str = "numeric"
     exam_dates: list[str]
     comparisons: list[ComparisonItem]
+
+
+class QuadrantAdvice(BaseModel):
+    summary: str = ""
+    action: str = ""
+    urgency: str = "routine"
+    details: list[str] = []
 
 
 class QuadrantItem(BaseModel):
     standard_name: str
     standard_code: str = ""
-    deviation: float
-    risk_weight: float
+    category: str = ""
+    deviation: float = 0.0
+    abs_deviation: float = 0.0
+    direction: str = "normal"
+    risk_weight: float = 0.0
+    quadrant: str = "正常范围"
     value: float | None = None
+    unit: str = ""
     ref_min: float | None = None
     ref_max: float | None = None
+    advice: QuadrantAdvice = QuadrantAdvice()
+
+
+class HealthScore(BaseModel):
+    score: int = 100
+    level: str = "优秀"
+    color: str = "#52c41a"
 
 
 class QuadrantStats(BaseModel):
@@ -78,12 +98,16 @@ class QuadrantStats(BaseModel):
     watch_count: int = 0
     mild_count: int = 0
     normal_count: int = 0
+    total: int = 0
 
 
 class QuadrantResponse(BaseModel):
     study_id: str
+    health_score: HealthScore = HealthScore()
     quadrants: dict[str, list[QuadrantItem]]
     stats: QuadrantStats
+    top_concerns: list[QuadrantItem] = []
+    disclaimer: str = ""
 
 
 class IndicatorFeature(BaseModel):
