@@ -38,7 +38,7 @@ class DBDataSource:
 
         # HY (化验室) — has SFXMDM, ItemResult, ItemUnit, DefValue, Flag
         hyb = self.db.execute_query("""
-            SELECT j.ID as study_id, j.JCRQ as exam_time, j.XM as patient_name,
+            SELECT j.ID as study_id, COALESCE(j.JCRQ, j.YYRQ) as exam_time, j.XM as patient_name,
                    j.XB as gender, j.CSNY as birth_date,
                    x.XMMC as package_name,
                    'HY' as dept_code, '化验室' as dept_name, 'ods_tj_hyb' as source_table,
@@ -68,7 +68,7 @@ class DBDataSource:
         }
         for dept_code, (table, dept_name) in dept_tables.items():
             dept_df = self.db.execute_query(f"""
-                SELECT j.ID as study_id, j.JCRQ as exam_time, j.XM as patient_name,
+                SELECT j.ID as study_id, COALESCE(j.JCRQ, j.YYRQ) as exam_time, j.XM as patient_name,
                        j.XB as gender, j.CSNY as birth_date,
                        x.XMMC as package_name,
                        '{dept_code}' as dept_code, '{dept_name}' as dept_name,
@@ -127,7 +127,7 @@ class DBDataSource:
         """
         logger.info("Querying hyb date range %s to %s (limit %d)", start_date, end_date, limit)
         df = self.db.execute_query("""
-            SELECT j.ID as study_id, j.JCRQ as exam_time, j.XM as patient_name,
+            SELECT j.ID as study_id, COALESCE(j.JCRQ, j.YYRQ) as exam_time, j.XM as patient_name,
                    j.XB as gender, j.CSNY as birth_date,
                    x.XMMC as package_name,
                    'HY' as dept_code, '化验室' as dept_name, 'ods_tj_hyb' as source_table,
