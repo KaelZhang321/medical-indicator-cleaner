@@ -1,12 +1,51 @@
 import { useState, useRef, useEffect } from 'react';
 import { Input, Button, Card, Statistic, Row, Col, Table, Tag, Alert, Progress, Collapse, Tooltip, message } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined, WarningOutlined, CheckCircleOutlined, HeartOutlined, MedicineBoxOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { Radar } from '@antv/g2plot';
-import { fetchFeatures, type FeaturesResponse, type IndicatorFeature } from '../api';
+import { Radar, TinyLine } from '@antv/g2plot';
+import { fetchFeatures, type FeaturesResponse, type IndicatorFeature, type TopRisk } from '../api';
 
 const RISK_COLORS: Record<string, string> = { '恶化': 'red', '新增异常': 'volcano', '持续异常': 'orange', '改善': 'green', '正常': 'default', '异常': 'orange' };
 const STATUS_COLORS: Record<string, string> = { '正常': '#52c41a', '需关注': '#faad14', '异常': '#fa8c16', '危险': '#ff4d4f', '无数据': '#999' };
 const TREND_ICONS: Record<string, React.ReactNode> = { '上升': <ArrowUpOutlined style={{ color: '#ff4d4f' }} />, '下降': <ArrowDownOutlined style={{ color: '#52c41a' }} />, '稳定': <MinusOutlined style={{ color: '#999' }} /> };
+
+function RiskSparkline({ risk }: { risk: TopRisk }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<TinyLine | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || risk.history.length < 2) return;
+    if (chartRef.current) chartRef.current.destroy();
+
+    const chart = new TinyLine(containerRef.current, {
+      data: risk.history.map(h => h.value),
+      height: 60,
+      autoFit: true,
+      smooth: true,
+      lineStyle: { stroke: risk.trend_type.includes('恶化') ? '#ff4d4f' : risk.trend_type.includes('改善') ? '#52c41a' : '#faad14', lineWidth: 2 },
+      point: { size: 3, style: { fill: '#fff', stroke: risk.trend_type.includes('恶化') ? '#ff4d4f' : '#faad14', lineWidth: 1 } },
+      tooltip: {
+        customContent: (_: string, items: any[]) => {
+          if (!items.length) return '';
+          const idx = items[0]?.data?.x ?? 0;
+          const pt = risk.history[idx];
+          return pt ? `<div style="padding:4px 8px">${pt.date}: <b>${pt.value}</b></div>` : '';
+        },
+      },
+    });
+    chart.render();
+    chartRef.current = chart;
+    return () => { chart.destroy(); };
+  }, [risk]);
+
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: '#999', marginBottom: 4 }}>
+        历史趋势（{risk.history[0]?.date} ~ {risk.history[risk.history.length - 1]?.date}，共{risk.history.length}次）
+      </div>
+      <div ref={containerRef} style={{ height: 60 }} />
+    </div>
+  );
+}
 
 export default function FeaturesPage() {
   const [sfzh, setSfzh] = useState('');
@@ -143,9 +182,15 @@ export default function FeaturesPage() {
                 ),
                 children: (
                   <div>
-                    <p>趋势方向：{r.slope_direction}</p>
-                    {r.predicted_6m != null && <p>6个月预测值：<strong>{r.predicted_6m}</strong></p>}
-                    <p>分类：{r.category}</p>
+                    {r.history.length >= 2 && (
+                      <RiskSparkline key={`spark-${r.code}-${idx}`} risk={r} />
+                    )}
+                    <Row gutter={16} style={{ marginTop: 8 }}>
+                      <Col span={8}><Statistic title="趋势方向" value={r.slope_direction || '—'} valueStyle={{ fontSize: 14 }} /></Col>
+                      <Col span={8}><Statistic title="6个月预测" value={r.predicted_6m != null ? r.predicted_6m : '—'} valueStyle={{ fontSize: 14 }} /></Col>
+                      <Col span={8}><Statistic title="预测区间" value={r.ci_lower != null && r.ci_upper != null ? `${r.ci_lower} ~ ${r.ci_upper}` : '—'} valueStyle={{ fontSize: 14 }} /></Col>
+                    </Row>
+                    <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>分类：{r.category}</div>
                   </div>
                 ),
               }))} />

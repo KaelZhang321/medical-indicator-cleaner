@@ -131,6 +131,11 @@ export interface DerivedIndicator {
   clinical: string;
 }
 
+export interface HistoryPoint {
+  date: string;
+  value: number;
+}
+
 export interface TopRisk {
   code: string;
   name: string;
@@ -139,9 +144,12 @@ export interface TopRisk {
   unit: string;
   trend_type: string;
   predicted_6m: number | null;
+  ci_lower: number | null;
+  ci_upper: number | null;
   consecutive_abnormal: number;
   risk_score: number;
   slope_direction: string;
+  history: HistoryPoint[];
 }
 
 export interface IndicatorFeature {

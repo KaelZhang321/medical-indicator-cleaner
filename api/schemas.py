@@ -144,6 +144,11 @@ class DerivedIndicator(BaseModel):
     clinical: str = ""
 
 
+class HistoryPoint(BaseModel):
+    date: str
+    value: float
+
+
 class TopRisk(BaseModel):
     code: str
     name: str
@@ -152,9 +157,12 @@ class TopRisk(BaseModel):
     unit: str = ""
     trend_type: str = ""
     predicted_6m: float | None = None
+    ci_lower: float | None = None
+    ci_upper: float | None = None
     consecutive_abnormal: int = 0
     risk_score: int = 0
     slope_direction: str = ""
+    history: list[HistoryPoint] = []
 
 
 class FeaturesSummary(BaseModel):

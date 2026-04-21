@@ -74,7 +74,10 @@ class HealthAssessmentEngine:
                     series.append((t, ind["value"]))
             if series:
                 ref = ref_lookup.get(code, (None, None))
-                trends[code] = self.trend_analyzer.analyze(series, ref[0], ref[1])
+                result = self.trend_analyzer.analyze(series, ref[0], ref[1])
+                # Attach raw history for sparkline charts
+                result["_history"] = [{"date": s[0][:10], "value": s[1]} for s in series]
+                trends[code] = result
 
         # 3. System-level assessment
         system_scores = []
@@ -294,9 +297,12 @@ class HealthAssessmentEngine:
                     "unit": info.get("unit", ""),
                     "trend_type": trend.get("trend_type", ""),
                     "predicted_6m": trend.get("predicted_6m"),
+                    "ci_lower": trend.get("ci_lower"),
+                    "ci_upper": trend.get("ci_upper"),
                     "consecutive_abnormal": trend.get("consecutive_abnormal", 0),
                     "risk_score": risk_score,
                     "slope_direction": trend.get("slope_direction", ""),
+                    "history": trend.get("_history", []),
                 })
 
         risks.sort(key=lambda r: r["risk_score"], reverse=True)
