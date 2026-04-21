@@ -10,6 +10,67 @@ function splitSentences(text: string): string[] {
     .filter(Boolean);
 }
 
+/** Split a long conclusion/summary text into sections by department headers. */
+function splitBySections(text: string): { title: string; content: string }[] {
+  // Match patterns like "一. xxx结论：" or "H-xxx超声:" or "1、xxx" or "【1. xxx】"
+  const headerPatterns = /(?:^|\n)\s*(?:[\u4e00-\u9fff]{1,2}[.、．]\s*.+?(?:结论|检查|超声|影像|化验|描述)[:：\r\n]|H-[^\n:：]+[:：\r\n]|【\d+[.、].+?】|(?:\d+)[.、]\s*(?=[^\d]))/gm;
+
+  const headers: { index: number; title: string }[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = headerPatterns.exec(text)) !== null) {
+    headers.push({ index: match.index, title: match[0].replace(/^[\n\r\s]+/, '').replace(/[:：\s]+$/, '') });
+  }
+
+  if (headers.length === 0) {
+    // No headers found - try splitting by \r\n\r\n or \n\n
+    const paragraphs = text.split(/\r?\n\r?\n+/).map(p => p.trim()).filter(Boolean);
+    if (paragraphs.length > 1) {
+      return paragraphs.map((p, i) => ({ title: `段落 ${i + 1}`, content: p }));
+    }
+    return [{ title: '', content: text }];
+  }
+
+  const sections: { title: string; content: string }[] = [];
+  for (let i = 0; i < headers.length; i++) {
+    const start = headers[i].index + headers[i].title.length + 1;
+    const end = i + 1 < headers.length ? headers[i + 1].index : text.length;
+    const content = text.slice(start, end).trim();
+    if (content) {
+      sections.push({ title: headers[i].title, content });
+    }
+  }
+
+  // Include any text before the first header
+  if (headers[0].index > 0) {
+    const preamble = text.slice(0, headers[0].index).trim();
+    if (preamble) {
+      sections.unshift({ title: '概述', content: preamble });
+    }
+  }
+
+  return sections;
+}
+
+/** Render a long text block with section splitting */
+function SectionedText({ text }: { text: string }) {
+  const sections = splitBySections(text);
+  if (sections.length <= 1 && !sections[0]?.title) {
+    // Short or no sections: render as-is with line breaks
+    return <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{text}</Typography.Paragraph>;
+  }
+  return (
+    <Collapse
+      size="small"
+      defaultActiveKey={sections.slice(0, 3).map((_, i) => String(i))}
+      items={sections.map((sec, i) => ({
+        key: String(i),
+        label: <Typography.Text strong>{sec.title || `内容 ${i + 1}`}</Typography.Text>,
+        children: <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.8 }}>{sec.content}</Typography.Paragraph>,
+      }))}
+    />
+  );
+}
+
 function normalizeSentence(text: string): string {
   return text.replace(/\s+/g, '').replace(/[，,。！？；;：:、]/g, '');
 }
@@ -288,38 +349,69 @@ export default function TextComparisonOptimizedPage() {
                           <Typography.Title level={5} style={{ margin: '0 0 8px 0', borderBottom: '1px solid #f0f0f0', paddingBottom: 4 }}>
                             {cat}
                           </Typography.Title>
-                          {catItems.map((item, idx) => (
-                            <Card key={`${item.code}-${idx}`} size="small" style={{ marginBottom: 8 }}
-                              title={
-                                <Space wrap>
-                                  <Typography.Text strong>{item.name}</Typography.Text>
-                                  <Tag color="orange">重点分 {item.score}</Tag>
-                                  <Tag>{item.latestDate}</Tag>
-                                </Space>
-                              }
-                            >
-                              {item.added.length > 0 && (
-                                <div style={{ marginBottom: item.removed.length > 0 ? 10 : 0 }}>
-                                  {item.added.map((sentence, si) => (
-                                    <div key={`${item.code}-add-${si}`} style={{ marginBottom: 6, paddingLeft: 4 }}>
-                                      <Tag color={sentenceBadgeColor(sentence)} style={{ marginRight: 8 }}>新增</Tag>
-                                      <Typography.Text>{sentence}</Typography.Text>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {item.removed.length > 0 && (
-                                <div>
-                                  {item.removed.map((sentence, si) => (
-                                    <div key={`${item.code}-rm-${si}`} style={{ marginBottom: 6, paddingLeft: 4 }}>
-                                      <Tag color="red" style={{ marginRight: 8 }}>消失</Tag>
-                                      <Typography.Text type="secondary" delete>{sentence}</Typography.Text>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </Card>
-                          ))}
+                          {catItems.map((item, idx) => {
+                            const isLongText = item.latestText.length > 200;
+                            return (
+                              <Card key={`${item.code}-${idx}`} size="small" style={{ marginBottom: 8 }}
+                                title={
+                                  <Space wrap>
+                                    <Typography.Text strong>{item.name}</Typography.Text>
+                                    <Tag color="orange">重点分 {item.score}</Tag>
+                                    <Tag>{item.latestDate}</Tag>
+                                    {isLongText && <Tag color="purple">长文本·已分段</Tag>}
+                                  </Space>
+                                }
+                              >
+                                {isLongText ? (
+                                  /* Long text: show sectioned full content + change tags */
+                                  <div>
+                                    <SectionedText text={item.latestText} />
+                                    {(item.added.length > 0 || item.removed.length > 0) && (
+                                      <div style={{ marginTop: 12, padding: '8px 0', borderTop: '1px dashed #f0f0f0' }}>
+                                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>变化摘要：</Typography.Text>
+                                        {item.added.slice(0, 5).map((sentence, si) => (
+                                          <div key={`${item.code}-add-${si}`} style={{ marginTop: 4, paddingLeft: 4 }}>
+                                            <Tag color={sentenceBadgeColor(sentence)}>新增</Tag>
+                                            <Typography.Text>{sentence}</Typography.Text>
+                                          </div>
+                                        ))}
+                                        {item.removed.slice(0, 3).map((sentence, si) => (
+                                          <div key={`${item.code}-rm-${si}`} style={{ marginTop: 4, paddingLeft: 4 }}>
+                                            <Tag color="red">消失</Tag>
+                                            <Typography.Text type="secondary" delete>{sentence}</Typography.Text>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  /* Short text: show added/removed tags directly */
+                                  <div>
+                                    {item.added.length > 0 && (
+                                      <div style={{ marginBottom: item.removed.length > 0 ? 10 : 0 }}>
+                                        {item.added.map((sentence, si) => (
+                                          <div key={`${item.code}-add-${si}`} style={{ marginBottom: 6, paddingLeft: 4 }}>
+                                            <Tag color={sentenceBadgeColor(sentence)}>新增</Tag>
+                                            <Typography.Text>{sentence}</Typography.Text>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {item.removed.length > 0 && (
+                                      <div>
+                                        {item.removed.map((sentence, si) => (
+                                          <div key={`${item.code}-rm-${si}`} style={{ marginBottom: 6, paddingLeft: 4 }}>
+                                            <Tag color="red">消失</Tag>
+                                            <Typography.Text type="secondary" delete>{sentence}</Typography.Text>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </Card>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>
