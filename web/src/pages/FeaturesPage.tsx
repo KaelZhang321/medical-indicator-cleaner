@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Input, Button, Card, Statistic, Row, Col, Table, Tag, Alert, Progress, Collapse, message } from 'antd';
-import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined, WarningOutlined, CheckCircleOutlined, HeartOutlined, MedicineBoxOutlined } from '@ant-design/icons';
+import { Input, Button, Card, Statistic, Row, Col, Table, Tag, Alert, Progress, Collapse, Tooltip, message } from 'antd';
+import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined, WarningOutlined, CheckCircleOutlined, HeartOutlined, MedicineBoxOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Radar } from '@antv/g2plot';
 import { fetchFeatures, type FeaturesResponse, type IndicatorFeature } from '../api';
 
@@ -73,7 +73,8 @@ export default function FeaturesPage() {
               <Card>
                 <div style={{ textAlign: 'center' }}>
                   <Progress type="dashboard" percent={data.overall_score} format={() => <span style={{ fontSize: 28, fontWeight: 'bold', color: data.overall_color }}>{data.overall_score}</span>} strokeColor={data.overall_color} size={120} />
-                  <div style={{ marginTop: 8, fontSize: 16, fontWeight: 'bold', color: data.overall_color }}>{data.overall_level}</div>
+                  <div style={{ marginTop: 8, fontSize: 16, fontWeight: 'bold', color: data.overall_color }}>健康度</div>
+                  <div style={{ fontSize: 12, color: '#999' }}>{data.overall_level}</div>
                 </div>
               </Card>
             </Col>
@@ -108,14 +109,15 @@ export default function FeaturesPage() {
             </Col>
             <Col span={12}>
               {data.derived_indicators.length > 0 && (
-                <Card title={<span><MedicineBoxOutlined /> 衍生临床指标</span>} style={{ marginBottom: 16 }}>
+                <Card title={<span><MedicineBoxOutlined /> 衍生临床指标 <Tooltip title="衍生指标是从基础检验指标通过比值计算得出的复合临床指标，能更准确地反映特定健康风险。点击指标旁的 ? 查看详细说明。"><QuestionCircleOutlined style={{ color: '#999', fontSize: 14, marginLeft: 4 }} /></Tooltip></span>} style={{ marginBottom: 16 }}>
                   <Table dataSource={data.derived_indicators} rowKey="code" size="small" pagination={false}
                     columns={[
-                      { title: '指标', dataIndex: 'name', width: 160 },
+                      { title: '指标', dataIndex: 'name', width: 180, render: (name: string, r: any) => (
+                        <span>{name} <Tooltip title={r.clinical || `${name}：由基础检验指标计算得出的复合指标，参考范围 ${r.ref_min ?? '—'}-${r.ref_max ?? '—'}`}><QuestionCircleOutlined style={{ color: '#1890ff', cursor: 'pointer' }} /></Tooltip></span>
+                      ) },
                       { title: '值', dataIndex: 'value', width: 60 },
                       { title: '参考', width: 80, render: (_: any, r: any) => r.ref_min != null && r.ref_max != null ? `${r.ref_min}-${r.ref_max}` : '-' },
                       { title: '状态', dataIndex: 'status', width: 60, render: (st: string) => <Tag color={st === '偏高' ? 'red' : st === '偏低' ? 'orange' : 'green'}>{st}</Tag> },
-                      { title: '临床意义', dataIndex: 'clinical', ellipsis: true },
                     ]}
                   />
                 </Card>
