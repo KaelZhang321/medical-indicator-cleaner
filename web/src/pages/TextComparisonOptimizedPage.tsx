@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Collapse, Input, List, Row, Select, Space, Statistic, Switch, Table, Tag, Typography, message } from 'antd';
+import { Alert, Button, Card, Col, Collapse, Input, Row, Select, Space, Statistic, Switch, Table, Tag, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { fetchTextComparison, type ComparisonItem, type ComparisonResponse } from '../api';
 
@@ -269,54 +269,65 @@ export default function TextComparisonOptimizedPage() {
           >
             <Collapse
               defaultActiveKey={['recommendation', 'lesion', 'grading']}
-              items={(['recommendation', 'lesion', 'grading', 'other'] as ChangeKind[]).map(kind => ({
-                key: kind,
-                label: `${CHANGE_KIND_LABEL[kind]} (${groupedSummaries[kind].length})`,
-                children: groupedSummaries[kind].length > 0 ? (
-                  <List
-                    dataSource={groupedSummaries[kind].slice(0, 6)}
-                    locale={{ emptyText: '暂无' }}
-                    renderItem={item => (
-                      <List.Item style={{ paddingLeft: 0, paddingRight: 0 }}>
-                        <Card size="small" style={{ width: '100%' }}>
-                          <Space wrap style={{ marginBottom: 8 }}>
-                            <Typography.Text strong>{item.name}</Typography.Text>
-                            <Tag color={CHANGE_KIND_COLOR[item.kind]}>{CHANGE_KIND_LABEL[item.kind]}</Tag>
-                            <Tag color="orange">重点分 {item.score}</Tag>
-                            <Tag>{item.latestDate}</Tag>
-                          </Space>
-                          {item.added.length > 0 && (
-                            <div style={{ marginBottom: item.removed.length > 0 ? 10 : 0 }}>
-                              {item.added.slice(0, 4).map((sentence, index) => (
-                                <div key={`${item.code}-add-${index}`} style={{ marginBottom: 6 }}>
-                                  <Tag color={sentenceBadgeColor(sentence)} style={{ marginRight: 8 }}>
-                                    新增
-                                  </Tag>
-                                  <Typography.Text>{sentence}</Typography.Text>
+              items={(['recommendation', 'lesion', 'grading', 'other'] as ChangeKind[]).map(kind => {
+                const items = groupedSummaries[kind];
+                // Group items by category
+                const byCategory: Record<string, ChangeSummary[]> = {};
+                for (const item of items) {
+                  const cat = item.category || '其他';
+                  if (!byCategory[cat]) byCategory[cat] = [];
+                  byCategory[cat].push(item);
+                }
+                return {
+                  key: kind,
+                  label: <span><Tag color={CHANGE_KIND_COLOR[kind]}>{CHANGE_KIND_LABEL[kind]}</Tag> <span style={{ color: '#999' }}>({items.length}项)</span></span>,
+                  children: items.length > 0 ? (
+                    <div>
+                      {Object.entries(byCategory).map(([cat, catItems]) => (
+                        <div key={cat} style={{ marginBottom: 16 }}>
+                          <Typography.Title level={5} style={{ margin: '0 0 8px 0', borderBottom: '1px solid #f0f0f0', paddingBottom: 4 }}>
+                            {cat}
+                          </Typography.Title>
+                          {catItems.map((item, idx) => (
+                            <Card key={`${item.code}-${idx}`} size="small" style={{ marginBottom: 8 }}
+                              title={
+                                <Space wrap>
+                                  <Typography.Text strong>{item.name}</Typography.Text>
+                                  <Tag color="orange">重点分 {item.score}</Tag>
+                                  <Tag>{item.latestDate}</Tag>
+                                </Space>
+                              }
+                            >
+                              {item.added.length > 0 && (
+                                <div style={{ marginBottom: item.removed.length > 0 ? 10 : 0 }}>
+                                  {item.added.map((sentence, si) => (
+                                    <div key={`${item.code}-add-${si}`} style={{ marginBottom: 6, paddingLeft: 4 }}>
+                                      <Tag color={sentenceBadgeColor(sentence)} style={{ marginRight: 8 }}>新增</Tag>
+                                      <Typography.Text>{sentence}</Typography.Text>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                          {item.removed.length > 0 && (
-                            <div>
-                              {item.removed.slice(0, 3).map((sentence, index) => (
-                                <div key={`${item.code}-remove-${index}`} style={{ marginBottom: 6 }}>
-                                  <Tag color="red" style={{ marginRight: 8 }}>
-                                    消失
-                                  </Tag>
-                                  <Typography.Text type="secondary">{sentence}</Typography.Text>
+                              )}
+                              {item.removed.length > 0 && (
+                                <div>
+                                  {item.removed.map((sentence, si) => (
+                                    <div key={`${item.code}-rm-${si}`} style={{ marginBottom: 6, paddingLeft: 4 }}>
+                                      <Tag color="red" style={{ marginRight: 8 }}>消失</Tag>
+                                      <Typography.Text type="secondary" delete>{sentence}</Typography.Text>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                        </Card>
-                      </List.Item>
-                    )}
-                  />
-                ) : (
-                  <Alert type="success" showIcon message="暂无重点变化" />
-                ),
-              }))}
+                              )}
+                            </Card>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Alert type="success" showIcon message="暂无重点变化" />
+                  ),
+                };
+              })}
             />
           </Card>
 
