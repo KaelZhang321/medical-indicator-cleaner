@@ -12,8 +12,9 @@ function splitSentences(text: string): string[] {
 
 /** Split a long conclusion/summary text into sections by department headers. */
 function splitBySections(text: string): { title: string; content: string }[] {
-  // Match patterns like "一. xxx结论：" or "H-xxx超声:" or "1、xxx" or "【1. xxx】"
-  const headerPatterns = /(?:^|\n)\s*(?:[\u4e00-\u9fff]{1,2}[.、．]\s*.+?(?:结论|检查|超声|影像|化验|描述)[:：\r\n]|H-[^\n:：]+[:：\r\n]|【\d+[.、].+?】|(?:\d+)[.、]\s*(?=[^\d]))/gm;
+  // Match Chinese numbered headers: 一. ~ 二十一. (1-2 char Chinese numerals)
+  // Also: H-xxx超声:, 【1. xxx】, (1) xxx
+  const headerPatterns = /(?:^|\n)\s*(?:[一二三四五六七八九十]{1,3}[.、．]\s*[^\n]{2,30}[:：\r\n]|H-[^\n:：]+[:：\r\n]|【\d+[.、].+?】|(?:\d+)[.、]\s*(?=[^\d]))/gm;
 
   const headers: { index: number; title: string }[] = [];
   let match: RegExpExecArray | null;
