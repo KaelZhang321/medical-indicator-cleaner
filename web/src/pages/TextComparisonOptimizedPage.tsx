@@ -210,81 +210,72 @@ export default function TextComparisonOptimizedPage() {
             </Col>
           </Row>
 
+          {/* 重点摘要：只显示有异常/建议/分级的条目，紧凑展示 */}
           <Card
             className="section-card"
-            title="医生快速阅读卡"
+            title={`重点发现 (${visibleExcerptBlocks.filter(b => b.section.hasExcerpt).length} 段)`}
             style={{ marginBottom: 16 }}
-            extra={<Typography.Text type="secondary">基于最新一次文本的 verbatim 摘录</Typography.Text>}
+            extra={<Typography.Text type="secondary">仅展示异常、分级和建议项</Typography.Text>}
           >
-            {parsedItems.length === 0 ? (
-              <Empty description="暂无可解析的文本内容" />
+            {visibleExcerptBlocks.filter(b => b.section.hasExcerpt).length === 0 ? (
+              <Alert type="success" showIcon message="未识别到重点发现，建议查看下方原文确认" />
             ) : (
-              <Row gutter={[16, 16]}>
-                {parsedItems.map(item => (
-                  <Col span={12} key={item.code}>
-                    <Card size="small" style={{ height: '100%' }}>
-                      <Space wrap style={{ marginBottom: 8 }}>
-                        <Typography.Text strong>{item.name}</Typography.Text>
-                        <Tag color="blue">{item.category || '未分类'}</Tag>
-                        <Tag>{item.latestDate}</Tag>
-                        {item.hasPrevious ? <Tag color="geekblue">含历史对照</Tag> : <Tag>仅本次</Tag>}
-                      </Space>
-                      <div style={{ display: 'grid', gap: 6 }}>
-                        <Typography.Text>异常摘录：{item.sections.reduce((sum, section) => sum + section.abnormalSentences.length, 0)} 条</Typography.Text>
-                        <Typography.Text>分级摘录：{item.sections.reduce((sum, section) => sum + section.gradingSentences.length, 0)} 条</Typography.Text>
-                        <Typography.Text>建议/随访：{item.sections.reduce((sum, section) => sum + section.adviceSentences.length, 0)} 条</Typography.Text>
-                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                          其余正常/稳定内容见下方原文
-                        </Typography.Text>
-                      </div>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
+              <Collapse
+                size="small"
+                defaultActiveKey={visibleExcerptBlocks.filter(b => b.section.hasExcerpt).slice(0, 3).map(b => `${b.item.code}-${b.section.key}`)}
+                items={visibleExcerptBlocks.filter(b => b.section.hasExcerpt).map(block => ({
+                  key: `${block.item.code}-${block.section.key}`,
+                  label: (
+                    <span>
+                      <Tag color="blue">{block.item.name}</Tag>
+                      <Typography.Text strong>{block.section.label}</Typography.Text>
+                      {block.section.adviceSentences.length > 0 && <Tag color="red" style={{ marginLeft: 6 }}>建议{block.section.adviceSentences.length}</Tag>}
+                      {block.section.gradingSentences.length > 0 && <Tag color="gold">分级{block.section.gradingSentences.length}</Tag>}
+                      {block.section.abnormalSentences.length > 0 && <Tag color="orange">异常{block.section.abnormalSentences.length}</Tag>}
+                    </span>
+                  ),
+                  children: (
+                    <div>
+                      {renderExcerptList(block.section.adviceSentences, '建议', 'red')}
+                      {renderExcerptList(block.section.gradingSentences, '分级', 'gold')}
+                      {renderExcerptList(block.section.abnormalSentences, '异常', 'orange')}
+                    </div>
+                  ),
+                }))}
+              />
             )}
           </Card>
 
+          {/* 完整原文：折叠展示，需要时展开 */}
           <Card
             className="section-card"
-            title="按原文标题/段落的重点摘录"
+            title="完整原文"
             style={{ marginBottom: 16 }}
-            extra={(
-              <Space wrap>
-                <Switch
-                  checkedChildren="仅看重点段落"
-                  unCheckedChildren="全部段落"
-                  checked={detailOnlyExcerptSections}
-                  onChange={setDetailOnlyExcerptSections}
-                />
-              </Space>
-            )}
+            extra={
+              <Switch
+                checkedChildren="仅看重点段落"
+                unCheckedChildren="全部段落"
+                checked={detailOnlyExcerptSections}
+                onChange={setDetailOnlyExcerptSections}
+              />
+            }
           >
-            {visibleExcerptBlocks.length === 0 ? (
-              <Empty description="暂无重点摘录段落" />
-            ) : (
-              visibleExcerptBlocks.map(block => (
-                <SectionExcerptCard
-                  key={`${block.item.code}-${block.section.key}`}
-                  item={block.item}
-                  section={block.section}
-                />
-              ))
-            )}
-          </Card>
-
-          <Card className="section-card" title="原始明细（按标题/段落）">
-            <Space direction="vertical" size={16} style={{ width: '100%' }}>
-              {parsedItems.map(item => (
-                <Card key={item.code} size="small">
-                  <Space wrap style={{ marginBottom: 10 }}>
+            <Collapse
+              size="small"
+              items={parsedItems.map(item => ({
+                key: item.code,
+                label: (
+                  <Space wrap>
                     <Typography.Text strong>{item.name}</Typography.Text>
                     <Tag color="blue">{item.category || '未分类'}</Tag>
                     <Tag>{item.latestDate}</Tag>
+                    {item.sections.some(s => s.hasExcerpt) && <Tag color="orange">含重点</Tag>}
+                    {item.sections.some(s => s.subSections.length > 0) && <Tag color="purple">{item.sections.reduce((n, s) => n + s.subSections.length, 0)}个子项</Tag>}
                   </Space>
-                  <RawSectionCollapse item={item} />
-                </Card>
-              ))}
-            </Space>
+                ),
+                children: <RawSectionCollapse item={item} />,
+              }))}
+            />
           </Card>
         </>
       )}
