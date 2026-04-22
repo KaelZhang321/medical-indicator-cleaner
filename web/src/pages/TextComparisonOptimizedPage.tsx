@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Collapse, Empty, Input, Row, Select, Space, Statistic, Switch, Tag, Typography, message } from 'antd';
+import { Alert, Button, Card, Col, Collapse, Input, Row, Select, Space, Statistic, Switch, Tag, Typography, message } from 'antd';
 import { fetchTextComparison, type ComparisonResponse } from '../api';
 import { extractErrorMessage } from '../errorUtils';
 import {
@@ -30,37 +30,6 @@ function renderExcerptList(sentences: ExcerptSentence[], label: string, color: s
   );
 }
 
-function SectionExcerptCard({ item, section }: { item: ParsedComparisonText; section: ParsedSection }) {
-  return (
-    <Card size="small" style={{ marginBottom: 12 }}>
-      <Space wrap style={{ marginBottom: 10 }}>
-        <Typography.Text strong>{item.name}</Typography.Text>
-        <Tag color="blue">{item.category || '未分类'}</Tag>
-        <Tag>{section.label}</Tag>
-        <Tag color={section.hasExcerpt ? 'orange' : 'default'}>
-          {section.hasExcerpt ? '有重点摘录' : '无重点摘录'}
-        </Tag>
-      </Space>
-
-      {section.adviceSentences.length > 0 && renderExcerptList(section.adviceSentences, '建议/随访', 'red')}
-      {section.gradingSentences.length > 0 && renderExcerptList(section.gradingSentences, '分级变化', 'gold')}
-      {section.abnormalSentences.length > 0 && renderExcerptList(section.abnormalSentences, '异常', 'orange')}
-
-      {!section.hasExcerpt && (
-        <Alert
-          type="info"
-          showIcon
-          message="该段无重点摘录，请查看原文"
-          style={{ marginTop: 4 }}
-        />
-      )}
-
-      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-        其余正常/稳定内容见原文
-      </Typography.Text>
-    </Card>
-  );
-}
 
 function RawSectionCollapse({ item }: { item: ParsedComparisonText }) {
   return (
