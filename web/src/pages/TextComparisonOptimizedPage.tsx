@@ -7,7 +7,6 @@ import {
   buildTextSummaryOverview,
   type ExcerptSentence,
   type ParsedComparisonText,
-  type ParsedSection,
 } from '../textSummary';
 
 function renderExcerptList(sentences: ExcerptSentence[], label: string, color: string) {
