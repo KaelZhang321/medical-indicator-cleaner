@@ -30,7 +30,7 @@ def get_exam(study_id: str) -> ExamResponse:
         db.close()
 
     if df.empty:
-        raise HTTPException(status_code=404, detail=f"No data found for study_id={study_id}")
+        raise HTTPException(status_code=404, detail=f"体检编号 {study_id} 暂无检验结果数据（可能尚未完成体检或结果未回传）")
 
     cleaner = get_cleaner()
     indicators: list[IndicatorResult] = []

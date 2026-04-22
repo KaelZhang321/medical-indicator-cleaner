@@ -184,28 +184,30 @@ class DBDataSource:
                 frames.append(text_df)
 
         if not frames:
-            logger.warning("No data found for study_id=%s", study_id)
+            logger.warning("No exam results found for study_id=%s (patient may exist but results not yet available)", study_id)
             return pd.DataFrame(columns=OUTPUT_COLUMNS)
 
         result = pd.concat(frames, ignore_index=True)
         logger.info("study_id=%s: %d rows from %d dept(s)", study_id, len(result), len(frames))
         return result
 
-    def query_by_patient(self, sfzh: str) -> list[pd.DataFrame]:
-        """Query all exam visits for a patient (by ID card number).
+    def query_by_patient(self, sfzh: str, max_visits: int = 10) -> list[pd.DataFrame]:
+        """Query recent exam visits for a patient (by ID card number).
 
         Returns a list of DataFrames, one per visit, sorted by exam_time.
+        Limited to most recent max_visits to avoid timeout on patients with many visits.
         """
-        logger.info("Querying patient sfzh=%s...", sfzh[:4] + "****")
+        logger.info("Querying patient sfzh=%s... (max %d visits)", sfzh[:4] + "****", max_visits)
         visits = self.db.execute_query(
-            "SELECT ID FROM ods_tj_jcxx WHERE SFZH = %s ORDER BY JCRQ", (sfzh,)
+            "SELECT ID FROM ods_tj_jcxx WHERE SFZH = %s ORDER BY COALESCE(JCRQ, YYRQ) DESC LIMIT %s",
+            (sfzh, max_visits),
         )
         if visits.empty:
             logger.warning("No visits found for patient")
             return []
 
         study_ids = visits["ID"].tolist()
-        logger.info("Found %d visit(s)", len(study_ids))
+        logger.info("Found %d visit(s) (limited to %d)", len(study_ids), max_visits)
         results = []
         for sid in study_ids:
             df = self.query_by_study_id(str(sid))
